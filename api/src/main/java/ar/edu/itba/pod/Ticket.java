@@ -5,15 +5,14 @@ import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.LocalDate;
 
 public class Ticket implements DataSerializable {
 
     private String plateNumber;
     private String infractionId;
-    private int fineAmount;
-    private LocalDateTime issueDate;
+    private double fineAmount;
+    private LocalDate issueDate;
     private String agencyName;
     private String neighbourhood;
 
@@ -25,11 +24,11 @@ public class Ticket implements DataSerializable {
         return infractionId;
     }
 
-    public LocalDateTime getIssueDate() {
+    public LocalDate getIssueDate() {
         return issueDate;
     }
 
-    public int getFineAmount() {
+    public double getFineAmount() {
         return fineAmount;
     }
 
@@ -43,7 +42,7 @@ public class Ticket implements DataSerializable {
 
     public Ticket(){}
 
-    public Ticket(String plateNumber, String infractionId, int fineAmount, LocalDateTime issueDate, String agency, String neighbourhood ){
+    public Ticket(String plateNumber, String infractionId, double fineAmount, LocalDate issueDate, String agency, String neighbourhood ){
         this.plateNumber = plateNumber;
         this.infractionId = infractionId;
         this.fineAmount = fineAmount;
@@ -56,7 +55,7 @@ public class Ticket implements DataSerializable {
     public void writeData(ObjectDataOutput out) throws IOException {
         out.writeUTF(plateNumber);
         out.writeUTF(infractionId);
-        out.writeInt(fineAmount);
+        out.writeDouble(fineAmount);
         out.writeObject(issueDate);
         out.writeUTF(agencyName);
         out.writeUTF(neighbourhood);
@@ -66,7 +65,7 @@ public class Ticket implements DataSerializable {
     public void readData(ObjectDataInput in) throws IOException {
         this.plateNumber = in.readUTF();
         this.infractionId = in.readUTF();
-        this.fineAmount = in.readInt();
+        this.fineAmount = in.readDouble();
         this.issueDate = in.readObject();
         this.agencyName = in.readUTF();
         this.neighbourhood = in.readUTF();
