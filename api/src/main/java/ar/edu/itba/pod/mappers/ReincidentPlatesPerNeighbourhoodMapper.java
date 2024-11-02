@@ -6,23 +6,22 @@ import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ReincidentPlatesPerNeighbourhoodMapper implements Mapper<Integer, String, PlateInNeighbourhood,Integer> {
-    private final LocalDate fromDate;
-    private final LocalDate toDate;
-    private final Cities city;
-
-    public ReincidentPlatesPerNeighbourhoodMapper(LocalDate from, LocalDate to, Cities city) {
-        this.fromDate = from;
-        this.toDate = to;
-        this.city = city;
+public class ReincidentPlatesPerNeighbourhoodMapper implements Mapper<PlateInNeighbourhood,Integer,String,Integer> {
+    private final int n;
+    private final ConcurrentMap<String,Integer> totalTicketsPerNeighbourhood;
+    public ReincidentPlatesPerNeighbourhoodMapper(int n, ConcurrentMap<String,Integer> totalTicketsPerNeighbourhood) {
+        this.n = n;
+        this.totalTicketsPerNeighbourhood = totalTicketsPerNeighbourhood;
     }
 
     @Override
-    public void map(Integer line, String document, Context<PlateInNeighbourhood, Integer> context) {
-        final String[] s = document.split(";");
-        if ( city.getIssueDate(s).isBefore(fromDate) || city.getIssueDate(s).isAfter(toDate) )
-            return;
-        context.emit(city.getPlateInNeighbourhood(s), 1);
+    public void map(PlateInNeighbourhood plateInNeighbourhood, Integer ticketsCount, Context<String, Integer> context) {
+        if ( ticketsCount >= n )
+            context.emit(plateInNeighbourhood.getNeighbourhood(), ticketsCount);
+        totalTicketsPerNeighbourhood.compute(plateInNeighbourhood.getNeighbourhood(), (k,v) -> v=ticketsCount + (v==null? 0 : v));
     }
 }

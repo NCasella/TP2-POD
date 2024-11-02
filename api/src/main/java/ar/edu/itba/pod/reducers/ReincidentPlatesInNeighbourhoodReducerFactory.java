@@ -4,9 +4,9 @@ import ar.edu.itba.pod.models.PlateInNeighbourhood;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-public class ReincidentPlatesPerNeighbourhoodReducerFactory implements ReducerFactory<String,Integer,Integer> {
+public class ReincidentPlatesInNeighbourhoodReducerFactory implements ReducerFactory<PlateInNeighbourhood,Integer,Integer> {
     @Override
-    public Reducer<Integer, Integer> newReducer(String neighbourhood) {
+    public Reducer<Integer, Integer> newReducer(PlateInNeighbourhood plateInNeighbourhood) {
         return new ReincidentPlatesPerNeighbourhoodReducer();
     }
 

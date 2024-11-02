@@ -4,9 +4,9 @@ import ar.edu.itba.pod.models.PlateInNeighbourhood;
 import com.hazelcast.mapreduce.Combiner;
 import com.hazelcast.mapreduce.CombinerFactory;
 
-public class ReincidentPlatesPerNeighbourhoodCombinerFactory implements CombinerFactory<String,Integer,Integer> {
+public class ReincidentPlatesInNeighbourhoodCombinerFactory implements CombinerFactory<PlateInNeighbourhood,Integer,Integer> {
     @Override
-    public Combiner<Integer,Integer> newCombiner(String neighbourhood) {
+    public Combiner<Integer,Integer> newCombiner(PlateInNeighbourhood plateInNeighbourhood) {
         return new ReincidentPlatesPerNeighbourhoodCombiner();
     }
 
