@@ -21,7 +21,7 @@ public class ReincidentPlatesPerNeighbourhoodMapper implements Mapper<PlateInNei
     @Override
     public void map(PlateInNeighbourhood plateInNeighbourhood, Integer ticketsCount, Context<String, Integer> context) {
         if ( ticketsCount >= n )
-            context.emit(plateInNeighbourhood.getNeighbourhood(), ticketsCount);
-        totalTicketsPerNeighbourhood.compute(plateInNeighbourhood.getNeighbourhood(), (k,v) -> v=ticketsCount + (v==null? 0 : v));
+            context.emit(plateInNeighbourhood.getNeighbourhood(), 1);
+        totalTicketsPerNeighbourhood.compute(plateInNeighbourhood.getNeighbourhood(), (k,v) -> v=1 + (v==null? 0 : v));
     }
 }

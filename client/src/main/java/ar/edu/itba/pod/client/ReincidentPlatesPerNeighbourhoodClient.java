@@ -62,6 +62,9 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
             // Wait and retrieve the result
             Map<PlateInNeighbourhood, Integer> result = future.get();
             System.out.println("Finished job 1");
+            result.forEach(
+                    (k, v) -> System.out.println(k + ": " + v)
+            );
             System.out.println("TOTAL: "+result.size());
             IMap<PlateInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap.getAndIncrement());
             imap2.putAll(result);
