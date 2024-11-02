@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
@@ -19,14 +21,25 @@ public abstract class AbstractClient {
     protected String inPath;
     protected String outPath;
     protected Cities cityParam;
+    protected LocalDate fromDateParam;
+    protected LocalDate toDateParam;
+    protected DateTimeFormatter dateTimeFormatter;
+    protected Integer nParam;
+
+    protected HazelcastInstance hazelcastInstance;
 
     protected abstract void runClientCode();
 
-    public void ClientMain() throws InterruptedException, IOException, ExecutionException {
-        String[] hosts = System.getProperty("serverAddresses").split(";");
+    public void clientMain() throws InterruptedException, IOException, ExecutionException {
+        String[] hosts = System.getProperty("addresses").split(";");
         cityParam=Cities.valueOf(System.getProperty("city"));
         inPath=System.getProperty("inPath");
         outPath=System.getProperty("outPath");
+        if ( System.getProperty("from") == null )
+            throw new IllegalArgumentException("from date is required");
+        fromDateParam=LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
+        toDateParam=LocalDate.parse(System.getProperty("to"),dateTimeFormatter);
+        nParam=Integer.parseInt(System.getProperty("n"));
 
         try {
             // Group Config
@@ -35,12 +48,12 @@ public abstract class AbstractClient {
             // Client Network Config
             ClientNetworkConfig clientNetworkConfig = new ClientNetworkConfig();
             clientNetworkConfig.setAddresses(Arrays.stream(hosts).toList());
-
+            clientNetworkConfig.addAddress("127.0.0.1");
             // Client Config
             ClientConfig clientConfig = new ClientConfig().setGroupConfig(groupConfig).setNetworkConfig(clientNetworkConfig);
 
             // Node Client
-            HazelcastInstance hazelcastInstance = HazelcastClient.newHazelcastClient(clientConfig);
+            hazelcastInstance = HazelcastClient.newHazelcastClient(clientConfig);
             runClientCode();
         } finally {
             HazelcastClient.shutdownAll();
