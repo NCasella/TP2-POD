@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -29,14 +30,21 @@ import java.util.stream.Stream;
 
 public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
     private final static AtomicInteger idMap = new AtomicInteger();
-
+    protected LocalDate fromDateParam;
+    protected LocalDate toDateParam;
+    protected DateTimeFormatter dateTimeFormatter;
+    protected Integer nParam;
     public ReincidentPlatesPerNeighbourhoodClient() {
         dateTimeFormatter =  DateTimeFormatter.ofPattern("dd/MM/yyyy");
     }
 
     @Override
     protected void runClientCode() {
-
+        if ( System.getProperty("from") == null )
+            throw new IllegalArgumentException("from date is required");
+        fromDateParam= LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
+        toDateParam=LocalDate.parse(System.getProperty("to"),dateTimeFormatter);
+        nParam=Integer.parseInt(System.getProperty("n"));
         // Key Value Source
         IMap<Integer, String> reincidentPlatesIMap = hazelcastInstance.getMap("ReincidentPlates" + idMap.getAndIncrement());
         KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(reincidentPlatesIMap);

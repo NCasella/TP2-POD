@@ -21,25 +21,19 @@ public abstract class AbstractClient {
     protected String inPath;
     protected String outPath;
     protected Cities cityParam;
-    protected LocalDate fromDateParam;
-    protected LocalDate toDateParam;
-    protected DateTimeFormatter dateTimeFormatter;
-    protected Integer nParam;
+
 
     protected HazelcastInstance hazelcastInstance;
 
-    protected abstract void runClientCode();
+
+    protected abstract void runClientCode() throws IOException,ExecutionException,InterruptedException;
 
     public void clientMain() throws InterruptedException, IOException, ExecutionException {
-        String[] hosts = System.getProperty("addresses").split(";");
+        String[] hosts = System.getProperty("serverAddresses").split(";");
         cityParam=Cities.valueOf(System.getProperty("city"));
         inPath=System.getProperty("inPath");
         outPath=System.getProperty("outPath");
-        if ( System.getProperty("from") == null )
-            throw new IllegalArgumentException("from date is required");
-        fromDateParam=LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
-        toDateParam=LocalDate.parse(System.getProperty("to"),dateTimeFormatter);
-        nParam=Integer.parseInt(System.getProperty("n"));
+
 
         try {
             // Group Config
