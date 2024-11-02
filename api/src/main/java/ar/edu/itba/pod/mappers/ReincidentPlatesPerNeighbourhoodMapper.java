@@ -7,7 +7,7 @@ import com.hazelcast.mapreduce.Mapper;
 
 import java.time.LocalDate;
 
-public class ReincidentPlatesPerNeighbourhoodMapper implements Mapper<Integer, String, PlateInNeighbourhood, Integer> {
+public class ReincidentPlatesPerNeighbourhoodMapper implements Mapper<Integer, String, PlateInNeighbourhood,Integer> {
     private final LocalDate fromDate;
     private final LocalDate toDate;
     private final Cities city;
