@@ -50,4 +50,9 @@ public class PlateInNeighbourhood implements DataSerializable {
     public String getNeighbourhood() {
         return neighbourhood;
     }
+
+    @Override
+    public String toString() {
+        return plate + " " + neighbourhood;
+    }
 }

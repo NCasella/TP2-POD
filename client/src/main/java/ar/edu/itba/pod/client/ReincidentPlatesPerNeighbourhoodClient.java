@@ -50,6 +50,7 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
             throw new RuntimeException(e);
         }
 
+        System.out.println("Starting job");
         // MapReduce Job
         Job<Integer, String> job = jobTracker.newJob(reincidentPlatesKeyValueSource);
 
@@ -60,12 +61,19 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
                 .submit();
 
         // Wait and retrieve the result
+
+        System.out.println("Finished job");
         try {
             Map<PlateInNeighbourhood, Integer> result = future.get();
+            result.forEach(
+                    (k, v) -> System.out.println(k + ": " + v)
+            );
+            System.out.println("TOTAL: "+result.size());
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
+        System.out.println("fin");
         // Sort entries ascending by count and print
 
     }

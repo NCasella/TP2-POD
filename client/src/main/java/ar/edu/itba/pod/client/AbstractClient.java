@@ -48,12 +48,16 @@ public abstract class AbstractClient {
             // Client Network Config
             ClientNetworkConfig clientNetworkConfig = new ClientNetworkConfig();
             clientNetworkConfig.setAddresses(Arrays.stream(hosts).toList());
-            clientNetworkConfig.addAddress("127.0.0.1");
+
+                // ! ojo, es temporal
+                clientNetworkConfig.addAddress("127.0.0.1");
+
             // Client Config
             ClientConfig clientConfig = new ClientConfig().setGroupConfig(groupConfig).setNetworkConfig(clientNetworkConfig);
 
             // Node Client
             hazelcastInstance = HazelcastClient.newHazelcastClient(clientConfig);
+            System.out.println("Starting...");
             runClientCode();
         } finally {
             HazelcastClient.shutdownAll();

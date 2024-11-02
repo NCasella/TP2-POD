@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter;
 
 public enum Cities {
     NYC(4,1,3,5,0,2,DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-    CHI(0,4,2,1,3,5,DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    CHI(0,4,2,1,3,5,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
     private final int issueDateIndex;
     private final int infractionIdIndex;
