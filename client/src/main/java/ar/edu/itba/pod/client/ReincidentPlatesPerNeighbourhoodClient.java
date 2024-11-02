@@ -1,5 +1,6 @@
 package ar.edu.itba.pod.client;
 
+import ar.edu.itba.pod.collators.ReincidentPlatesPerNeighbourhoodCollator;
 import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodCombinerFactory;
 import ar.edu.itba.pod.combiners.ReincidentPlatesPerNeighbourhoodCombinerFactory;
 import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodMapper;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +40,7 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
         // Key Value Source
         IMap<Integer, String> reincidentPlatesIMap = hazelcastInstance.getMap("ReincidentPlates" + idMap.getAndIncrement());
         KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(reincidentPlatesIMap);
+        IMap<PlateInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap.getAndIncrement());
 
         // Job Tracker
         JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count");
@@ -66,31 +69,29 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
                     (k, v) -> System.out.println(k + ": " + v)
             );
             System.out.println("TOTAL: "+result.size());
-            IMap<PlateInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap.getAndIncrement());
+
             imap2.putAll(result);
 
             KeyValueSource<PlateInNeighbourhood,Integer> reincidentPlatesPerNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap2);
             Job<PlateInNeighbourhood,Integer> jobPlatesPerNeighbourhood = jobTracker.newJob(reincidentPlatesPerNeightbourhoodKeyValueSource);
-            ConcurrentMap<String,Integer> totalTicketsPerNeighbourhood = new ConcurrentHashMap<>();
 
-            ICompletableFuture<Map<String,Integer>> future2 = jobPlatesPerNeighbourhood
-                    .mapper(new ReincidentPlatesPerNeighbourhoodMapper(nParam,totalTicketsPerNeighbourhood) )
+            ICompletableFuture<List<Map.Entry<String,Double>>> future2 = jobPlatesPerNeighbourhood
+                    .mapper(new ReincidentPlatesPerNeighbourhoodMapper(nParam) )
                     .combiner(new ReincidentPlatesPerNeighbourhoodCombinerFactory())
                     .reducer(new ReincidentPlatesPerNeighbourhoodReducerFactory())
-                    .submit();
+                    .submit(new ReincidentPlatesPerNeighbourhoodCollator());
 
             // Wait and retrieve the result
-            Map<String, Integer> result2 = future2.get();
+            List<Map.Entry<String,Double>> result2 = future2.get();
             System.out.println("Finished job");
-            result2.forEach(
-                    (k, v) -> System.out.println(k + ": " + v)
-            );
+            result2.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
             System.out.println("TOTAL: "+result2.size());
 
         } catch (ExecutionException | InterruptedException | IOException e) {
             throw new RuntimeException(e);
         } finally {
             reincidentPlatesIMap.destroy();
+            imap2.destroy();
             System.out.println("fin");
             // Sort entries ascending by count and print
         }

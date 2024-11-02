@@ -1,31 +1,31 @@
 package ar.edu.itba.pod.combiners;
 
-import ar.edu.itba.pod.models.PlateInNeighbourhood;
+import ar.edu.itba.pod.models.IncidentPlatesCount;
 import com.hazelcast.mapreduce.Combiner;
 import com.hazelcast.mapreduce.CombinerFactory;
 
-public class ReincidentPlatesPerNeighbourhoodCombinerFactory implements CombinerFactory<String,Integer,Integer> {
+public class ReincidentPlatesPerNeighbourhoodCombinerFactory implements CombinerFactory<String,IncidentPlatesCount,IncidentPlatesCount> {
     @Override
-    public Combiner<Integer,Integer> newCombiner(String neighbourhood) {
+    public Combiner<IncidentPlatesCount,IncidentPlatesCount> newCombiner(String neighbourhood) {
         return new ReincidentPlatesPerNeighbourhoodCombiner();
     }
 
-    private static class ReincidentPlatesPerNeighbourhoodCombiner extends Combiner<Integer,Integer> {
-        private int sum = 0;
+    private static class ReincidentPlatesPerNeighbourhoodCombiner extends Combiner<IncidentPlatesCount,IncidentPlatesCount> {
+        private IncidentPlatesCount total = new IncidentPlatesCount();
 
         @Override
-        public Integer finalizeChunk() {
-            return sum;
+        public IncidentPlatesCount finalizeChunk() {
+            return total;
         }
 
         @Override
-        public void combine(Integer value) {
-            sum += value;
+        public void combine(IncidentPlatesCount i) {
+            total.addIncidentPlates(i);
         }
 
         @Override
         public void reset() {
-            sum = 0;
+            total = new IncidentPlatesCount();
         }
     }
 }

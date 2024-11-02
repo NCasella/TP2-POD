@@ -1,26 +1,31 @@
 package ar.edu.itba.pod.reducers;
 
+import ar.edu.itba.pod.models.IncidentPlatesCount;
 import ar.edu.itba.pod.models.PlateInNeighbourhood;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-public class ReincidentPlatesPerNeighbourhoodReducerFactory implements ReducerFactory<String,Integer,Integer> {
+import java.util.Map;
+
+public class ReincidentPlatesPerNeighbourhoodReducerFactory implements ReducerFactory<String, IncidentPlatesCount,Double> {
+
+
     @Override
-    public Reducer<Integer, Integer> newReducer(String neighbourhood) {
+    public Reducer<IncidentPlatesCount, Double> newReducer(String neighbourhood) {
         return new ReincidentPlatesPerNeighbourhoodReducer();
     }
 
-    private static class ReincidentPlatesPerNeighbourhoodReducer extends Reducer<Integer,Integer> {
-        private int sum = 0;
+    private static class ReincidentPlatesPerNeighbourhoodReducer extends Reducer<IncidentPlatesCount,Double> {
+        private IncidentPlatesCount total = new IncidentPlatesCount();
 
         @Override
-        public void reduce(Integer value) {
-            sum += value;
+        public void reduce(IncidentPlatesCount i) {
+            total.addIncidentPlates(i);
         }
 
         @Override
-        public Integer finalizeReduce() {
-            return sum;
+        public Double finalizeReduce() {
+            return total.getPercentage();
         }
     }
 }
