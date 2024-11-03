@@ -9,3 +9,4 @@
 *.rar
 *.log
 target/
+.DS_Store

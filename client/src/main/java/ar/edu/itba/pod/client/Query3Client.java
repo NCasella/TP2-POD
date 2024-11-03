@@ -3,6 +3,7 @@ package ar.edu.itba.pod.client;
 import ar.edu.itba.pod.collators.ReincidentPlatesPerNeighbourhoodCollator;
 import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodCombinerFactory;
 import ar.edu.itba.pod.combiners.ReincidentPlatesPerNeighbourhoodCombinerFactory;
+import ar.edu.itba.pod.exceptions.InvalidParamException;
 import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodMapper;
 import ar.edu.itba.pod.mappers.ReincidentPlatesPerNeighbourhoodMapper;
 import ar.edu.itba.pod.models.PlateInNeighbourhood;
@@ -17,36 +18,46 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
+public class Query3Client extends AbstractClient{
     private final static AtomicInteger lastId = new AtomicInteger();
     private LocalDate fromDateParam;
     private LocalDate toDateParam;
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final String DATE_PATTERN = "dd/MM/yyyy";
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
     private static final DecimalFormat df = new DecimalFormat("#.##");
     private Integer nParam;
     private String idMap = LocalDate.now().toString();
 
 
     private void getParams() {
-        if ( System.getProperty("from") == null )
-            throw new IllegalArgumentException("from date is required");
-        fromDateParam= LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
-        toDateParam=LocalDate.parse(System.getProperty("to"),dateTimeFormatter);
-        nParam=Integer.parseInt(System.getProperty("n"));
+        try {
+            nParam=Integer.parseInt(System.getProperty("n"));
+        } catch (NumberFormatException e) {
+            throw new InvalidParamException("'n' param as integer is required");
+        }
+        if ( nParam<2 )
+            throw new InvalidParamException("'n' param can't be less than 2");
+        try {
+            fromDateParam= LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
+        } catch (DateTimeParseException e) {
+            throw new InvalidParamException("'from' date param as '" + DATE_PATTERN + "' is required");
+        }
+        try {
+            toDateParam=LocalDate.parse(System.getProperty("to"),dateTimeFormatter);
+        } catch (DateTimeParseException e) {
+            throw new InvalidParamException("'to' date param as '" + DATE_PATTERN + "' is required");
+        }
     }
 
     @Override
@@ -138,6 +149,6 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
-        new ReincidentPlatesPerNeighbourhoodClient().clientMain();
+        new Query3Client().clientMain();
     }
 }

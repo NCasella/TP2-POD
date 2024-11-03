@@ -53,7 +53,12 @@ public abstract class AbstractClient {
             // Node Client
             hazelcastInstance = HazelcastClient.newHazelcastClient(clientConfig);
             System.out.println("Starting...");
-            runClientCode();
+            try {
+                runClientCode();
+            } catch (RuntimeException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+
         } finally {
             HazelcastClient.shutdownAll();
         }
