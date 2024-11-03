@@ -79,11 +79,12 @@ public class Query3Client extends AbstractClient{
         JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count"+ idMap);
 
         System.out.println("-------- READING FILE --------");
-        LocalDateTime startTime = LocalDateTime.now();
-        System.out.println(startTime);
+        System.out.println(LocalDateTime.now());
+
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
-            Stream<String> lines = Files.lines(Path.of(inPath), StandardCharsets.UTF_8);
+
+            Stream<String> lines = Files.lines(Paths.get(inPath+"tickets"+cityParam+".csv"), StandardCharsets.UTF_8);
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
 
