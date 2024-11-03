@@ -11,7 +11,7 @@ public class ReincidentPlatesPerNeighbourhoodCollator implements Collator<Map.En
 
     @Override
     public List<Map.Entry<String, Double>> collate(Iterable<Map.Entry<String, Double>> values) {
-        return StreamSupport.stream(values.spliterator(),false) // no existen muchos varios, asi que no conviene parallel
+        return StreamSupport.stream(values.spliterator(),false)             // no existen muchos barrios, asi que no conviene parallel
                 .filter(entry -> entry.getValue() > 0.0)
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed()
                         .thenComparing(Map.Entry.comparingByKey()))

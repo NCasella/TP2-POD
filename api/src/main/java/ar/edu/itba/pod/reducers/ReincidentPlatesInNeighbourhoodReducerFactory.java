@@ -1,26 +1,29 @@
 package ar.edu.itba.pod.reducers;
 
+
 import ar.edu.itba.pod.models.PlateInNeighbourhood;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-public class ReincidentPlatesInNeighbourhoodReducerFactory implements ReducerFactory<PlateInNeighbourhood,Integer,Integer> {
+public class ReincidentPlatesInNeighbourhoodReducerFactory implements ReducerFactory<PlateInNeighbourhood,Boolean,Boolean> {
     @Override
-    public Reducer<Integer, Integer> newReducer(PlateInNeighbourhood plateInNeighbourhood) {
+    public Reducer<Boolean,Boolean> newReducer(PlateInNeighbourhood plateInNeighbourhood) {
         return new ReincidentPlatesPerNeighbourhoodReducer();
     }
 
-    private static class ReincidentPlatesPerNeighbourhoodReducer extends Reducer<Integer,Integer> {
-        private int sum = 0;
+    private static class ReincidentPlatesPerNeighbourhoodReducer extends Reducer<Boolean,Boolean> {
+        private Boolean nOrMoreTickets = false;
 
         @Override
-        public void reduce(Integer value) {
-            sum += value;
+        public void reduce(Boolean hasnOrMoreTickets) {
+            if ( hasnOrMoreTickets )
+                nOrMoreTickets = true;
         }
 
         @Override
-        public Integer finalizeReduce() {
-            return sum;
+        public Boolean finalizeReduce() {
+            return nOrMoreTickets;
         }
+
     }
 }

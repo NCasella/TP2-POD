@@ -57,8 +57,8 @@ public enum Cities {
         return LocalDate.parse(line[issueDateIndex], dateFormatter);
     }
 
-    public PlateInNeighbourhood getPlateInNeighbourhood( String[] line) {
-        return new PlateInNeighbourhood(line[plateNumberIndex],line[neighbourhoodIndex] );
+    public PlateInfractionInNeighbourhood getPlateInfractionInNeighbourhood(String[] line) {
+        return new PlateInfractionInNeighbourhood(line[plateNumberIndex],line[neighbourhoodIndex], line[infractionIdIndex] );
 
     }
 }

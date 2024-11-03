@@ -1,5 +1,6 @@
 package ar.edu.itba.pod.client;
 
+import ar.edu.itba.pod.exceptions.InvalidParamException;
 import ar.edu.itba.pod.models.Cities;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
@@ -55,7 +56,7 @@ public abstract class AbstractClient {
             System.out.println("Starting...");
             try {
                 runClientCode();
-            } catch (RuntimeException e) {
+            } catch (InvalidParamException e) {
                 System.out.println("Error: " + e.getMessage());
             }
 

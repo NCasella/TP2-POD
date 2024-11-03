@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class PlateInNeighbourhood implements DataSerializable {
-    private String plate;
-    private String neighbourhood;
+    protected String plate;
+    protected String neighbourhood;
 
     public PlateInNeighbourhood(String plate, String neighbourhood) {
         this.plate = plate;

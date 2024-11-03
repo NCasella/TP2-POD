@@ -4,28 +4,29 @@ import ar.edu.itba.pod.models.PlateInNeighbourhood;
 import com.hazelcast.mapreduce.Combiner;
 import com.hazelcast.mapreduce.CombinerFactory;
 
-public class ReincidentPlatesInNeighbourhoodCombinerFactory implements CombinerFactory<PlateInNeighbourhood,Integer,Integer> {
+public class ReincidentPlatesInNeighbourhoodCombinerFactory implements CombinerFactory<PlateInNeighbourhood,Boolean,Boolean> {
     @Override
-    public Combiner<Integer,Integer> newCombiner(PlateInNeighbourhood plateInNeighbourhood) {
-        return new ReincidentPlatesPerNeighbourhoodCombiner();
+    public Combiner<Boolean, Boolean> newCombiner(PlateInNeighbourhood plateInNeighbourhood) {
+        return new ReincidentPlatesInNeighbourhoodCombiner();
     }
 
-    private static class ReincidentPlatesPerNeighbourhoodCombiner extends Combiner<Integer,Integer> {
-        private int sum = 0;
+    private static class ReincidentPlatesInNeighbourhoodCombiner extends Combiner<Boolean,Boolean> {
+        private Boolean nOrMoreTickets = false;
 
         @Override
-        public Integer finalizeChunk() {
-            return sum;
+        public void combine(Boolean hasnOrMoreTickets) {
+            if ( hasnOrMoreTickets )
+                nOrMoreTickets = true;
         }
 
         @Override
-        public void combine(Integer value) {
-            sum += value;
+        public Boolean finalizeChunk() {
+            return nOrMoreTickets;
         }
 
         @Override
         public void reset() {
-            sum = 0;
+            nOrMoreTickets = false;
         }
     }
 }
