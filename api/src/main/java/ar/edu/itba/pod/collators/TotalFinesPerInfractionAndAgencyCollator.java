@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.Collators;
+package ar.edu.itba.pod.collators;
 
 import ar.edu.itba.pod.models.InfractionAgencyKey;
 import com.hazelcast.mapreduce.Collator;
