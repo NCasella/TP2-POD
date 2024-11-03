@@ -16,12 +16,15 @@ import com.hazelcast.mapreduce.KeyValueSource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -29,38 +32,48 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
-    private final static AtomicInteger idMap = new AtomicInteger();
-    protected LocalDate fromDateParam;
-    protected LocalDate toDateParam;
-    protected DateTimeFormatter dateTimeFormatter;
-    protected Integer nParam;
-    public ReincidentPlatesPerNeighbourhoodClient() {
-        dateTimeFormatter =  DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    }
+    private final static AtomicInteger lastId = new AtomicInteger();
+    private LocalDate fromDateParam;
+    private LocalDate toDateParam;
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DecimalFormat df = new DecimalFormat("#.##");
+    private Integer nParam;
+    private String idMap = LocalDate.now().toString();
 
-    @Override
-    protected void runClientCode() {
+
+    private void getParams() {
         if ( System.getProperty("from") == null )
             throw new IllegalArgumentException("from date is required");
         fromDateParam= LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
         toDateParam=LocalDate.parse(System.getProperty("to"),dateTimeFormatter);
         nParam=Integer.parseInt(System.getProperty("n"));
+    }
+
+    @Override
+    protected void runClientCode() {
+        getParams();
+
         // Key Value Source
-        IMap<Integer, String> reincidentPlatesIMap = hazelcastInstance.getMap("ReincidentPlates" + idMap.getAndIncrement());
+        IMap<Integer, String> reincidentPlatesIMap = hazelcastInstance.getMap("ReincidentPlates" + idMap);
         KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(reincidentPlatesIMap);
-        IMap<PlateInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap.getAndIncrement());
+        IMap<PlateInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap);
 
         // Job Tracker
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count");
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count"+ idMap);
 
-        // Text File Reading and Key Value Source Loading
+        System.out.println("---- READING FILE ----");
+        LocalDateTime startTime = LocalDateTime.now();
+        System.out.println(startTime);
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
             Stream<String> lines = Files.lines(Path.of(inPath), StandardCharsets.UTF_8);
             lines = lines.skip(1);
             lines.forEach(line -> reincidentPlatesIMap.put(auxKey.getAndIncrement(), line));
 
-            System.out.println("Starting job");
+            LocalDateTime beforeJob1 = LocalDateTime.now();
+            System.out.println("---- starting job ----");
+            System.out.println(beforeJob1);
+
             // MapReduce Job
             Job<Integer, String> jobPlatesInNeighbourhood = jobTracker.newJob(reincidentPlatesKeyValueSource);
 
@@ -73,13 +86,17 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
             // Wait and retrieve the result
             Map<PlateInNeighbourhood, Integer> result = future.get();
             System.out.println("Finished job 1");
-            result.forEach(
-                    (k, v) -> System.out.println(k + ": " + v)
-            );
-            System.out.println("TOTAL: "+result.size());
+            System.out.println(LocalDateTime.now());
 
+            //result.forEach(
+            //        (k, v) -> System.out.println(k + ": " + v)
+            //);
+            System.out.println("TOTAL: "+result.size());
+            System.out.println(LocalDateTime.now());
             imap2.putAll(result);
 
+            System.out.println("---- second job ----");
+            System.out.println(LocalDateTime.now());
             KeyValueSource<PlateInNeighbourhood,Integer> reincidentPlatesPerNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap2);
             Job<PlateInNeighbourhood,Integer> jobPlatesPerNeighbourhood = jobTracker.newJob(reincidentPlatesPerNeightbourhoodKeyValueSource);
 
@@ -91,9 +108,25 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
 
             // Wait and retrieve the result
             List<Map.Entry<String,Double>> result2 = future2.get();
-            System.out.println("Finished job");
-            result2.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
+            System.out.println("Finished job2");
+            System.out.println(LocalDateTime.now());
+            // result2.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
             System.out.println("TOTAL: "+result2.size());
+
+            try {
+                Path path= Paths.get(outPath+"/query3.csv");
+                Files.write(path,"County;Percentage\n".getBytes());
+
+                for( Map.Entry<String,Double> e : result2){
+                    StringBuilder stringToWrite=new StringBuilder(e.getKey())
+                            .append(";").append( df.format(e.getValue()) ).append("\n");
+                    Files.write(path,stringToWrite.toString().getBytes(), StandardOpenOption.APPEND);
+                }
+
+            } catch (InvalidPathException | NoSuchFileException e) {
+                System.out.println("Invalid path, query3.csv won't be created");
+            }
+
 
         } catch (ExecutionException | InterruptedException | IOException e) {
             throw new RuntimeException(e);
@@ -101,7 +134,6 @@ public class ReincidentPlatesPerNeighbourhoodClient extends AbstractClient{
             reincidentPlatesIMap.destroy();
             imap2.destroy();
             System.out.println("fin");
-            // Sort entries ascending by count and print
         }
     }
 

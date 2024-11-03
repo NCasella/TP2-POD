@@ -29,7 +29,7 @@ public abstract class AbstractClient {
     protected abstract void runClientCode() throws IOException,ExecutionException,InterruptedException;
 
     public void clientMain() throws InterruptedException, IOException, ExecutionException {
-        String[] hosts = System.getProperty("serverAddresses").split(";");
+        String[] hosts = System.getProperty("addresses").split(";");
         cityParam=Cities.valueOf(System.getProperty("city"));
         inPath=System.getProperty("inPath");
         outPath=System.getProperty("outPath");
