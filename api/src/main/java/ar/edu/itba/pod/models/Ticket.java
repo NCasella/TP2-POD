@@ -11,7 +11,7 @@ public class Ticket implements DataSerializable {
 
     private String plateNumber;
     private String infractionId;
-    private double fineAmount;
+    private int fineAmount;
     private LocalDate issueDate;
     private String agencyName;
     private String neighbourhood;
@@ -28,7 +28,7 @@ public class Ticket implements DataSerializable {
         return issueDate;
     }
 
-    public double getFineAmount() {
+    public int getFineAmount() {
         return fineAmount;
     }
 
@@ -40,9 +40,13 @@ public class Ticket implements DataSerializable {
         return neighbourhood;
     }
 
+    public void setInfractionId(String infractionId) {
+        this.infractionId = infractionId;
+    }
+
     public Ticket(){}
 
-    public Ticket(String plateNumber, String infractionId, double fineAmount, LocalDate issueDate, String agency, String neighbourhood ){
+    public Ticket(String plateNumber, String infractionId, int fineAmount, LocalDate issueDate, String agency, String neighbourhood ){
         this.plateNumber = plateNumber;
         this.infractionId = infractionId;
         this.fineAmount = fineAmount;
@@ -55,7 +59,7 @@ public class Ticket implements DataSerializable {
     public void writeData(ObjectDataOutput out) throws IOException {
         out.writeUTF(plateNumber);
         out.writeUTF(infractionId);
-        out.writeDouble(fineAmount);
+        out.writeInt(fineAmount);
         out.writeObject(issueDate);
         out.writeUTF(agencyName);
         out.writeUTF(neighbourhood);
@@ -65,7 +69,7 @@ public class Ticket implements DataSerializable {
     public void readData(ObjectDataInput in) throws IOException {
         this.plateNumber = in.readUTF();
         this.infractionId = in.readUTF();
-        this.fineAmount = in.readDouble();
+        this.fineAmount = in.readInt();
         this.issueDate = in.readObject();
         this.agencyName = in.readUTF();
         this.neighbourhood = in.readUTF();

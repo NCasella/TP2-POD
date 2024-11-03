@@ -1,6 +1,6 @@
 package ar.edu.itba.pod.client;
 
-import ar.edu.itba.pod.Collators.TotalFinesPerInfractionAndAgencyCollator;
+import ar.edu.itba.pod.collators.TotalFinesPerInfractionAndAgencyCollator;
 import ar.edu.itba.pod.combiners.TotalFinesPerInfractionAndAgencyCombinerFactory;
 import ar.edu.itba.pod.models.Infraction;
 import ar.edu.itba.pod.models.InfractionAgencyKey;

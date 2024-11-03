@@ -50,7 +50,7 @@ public enum Cities {
     }
 
     public Ticket getTicket(String[] line ) {
-        return new Ticket(line[plateNumberIndex] , line[infractionIdIndex], Double.parseDouble(line[fineAmountIndex]), LocalDate.parse(line[issueDateIndex],this.dateFormatter),  line[agencyIndex], line[neighbourhoodIndex] );
+        return new Ticket(line[plateNumberIndex] , line[infractionIdIndex], line[fineAmountIndex].indexOf('.')>= 0 ? Integer.parseInt(line[fineAmountIndex].substring(0,line[fineAmountIndex].indexOf('.'))) : Integer.parseInt(line[fineAmountIndex]), LocalDate.parse(line[issueDateIndex],this.dateFormatter),  line[agencyIndex], line[neighbourhoodIndex] );
     }
 
     public LocalDate getIssueDate( String[] line ) {
