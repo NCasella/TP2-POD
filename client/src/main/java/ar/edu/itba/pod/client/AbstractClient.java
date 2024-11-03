@@ -17,12 +17,13 @@ import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(Client.class);
+    protected static final Logger logger = LoggerFactory.getLogger(Client.class);
     protected String inPath;
     protected String outPath;
     protected Cities cityParam;
 
 
+    //TODO: hacer el loggeo de los timestamps aca, asi se hace mas generico y menor repeticion de codigo/posibles errores
     protected HazelcastInstance hazelcastInstance;
 
 

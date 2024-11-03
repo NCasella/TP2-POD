@@ -17,7 +17,9 @@ public class TotalFinesPerInfractionAndAgencyMapper implements Mapper<String, Ti
     private transient HazelcastInstance hazelcastInstance;
     @Override
     public void map(String s, Ticket ticket, Context<InfractionAgencyKey, Long> context) {
-        context.emit(new InfractionAgencyKey(hazelcastInstance.<String,Infraction>getMap("g7-violations").get(ticket.getInfractionId()).getDescription(),ticket.getAgencyName()),1L);
+        if(!hazelcastInstance.<String>getSet("g7-agencies").contains(ticket.getAgencyName()))
+            return;
+        context.emit(new InfractionAgencyKey(hazelcastInstance.<String, Infraction>getMap("g7-violations").get(ticket.getInfractionId()).getDescription(), ticket.getAgencyName()), 1L);
     }
 
     @Override

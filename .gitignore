@@ -7,4 +7,5 @@
 *.zip
 *.tar.gz
 *.rar
+*.log
 target/

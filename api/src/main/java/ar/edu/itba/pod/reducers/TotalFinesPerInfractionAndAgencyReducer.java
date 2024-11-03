@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.reducer;
+package ar.edu.itba.pod.reducers;
 
 import ar.edu.itba.pod.models.InfractionAgencyKey;
 import com.hazelcast.mapreduce.Reducer;
