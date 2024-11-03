@@ -61,6 +61,8 @@ public class Query3Client extends AbstractClient{
         } catch (DateTimeParseException e) {
             throw new InvalidParamException("'to' date param as '" + DATE_PATTERN + "' is required");
         }
+        if ( toDateParam.isBefore(fromDateParam) )
+            throw new InvalidParamException("'to' date param should be after 'from' date");
     }
 
     @Override
@@ -88,7 +90,7 @@ public class Query3Client extends AbstractClient{
 
             // ---------------------------------------------------- JOB 1 ---------------------------------------------------- //
             System.out.println("-------- JOB 1 --------");
-            System.out.println("Start: " + LocalDateTime.now());
+            System.out.println(LocalDateTime.now());
 
             // MapReduce Job
             Job<Integer, String> jobPlatesInNeighbourhoodByInfractionType = jobTracker.newJob(reincidentPlatesKeyValueSource);
@@ -100,7 +102,7 @@ public class Query3Client extends AbstractClient{
                     .submit();
 
             Map<PlateInfractionInNeighbourhood, Integer> result = future.get();
-            System.out.println("Finish: " + LocalDateTime.now());
+            System.out.println(LocalDateTime.now());
 
             //result.forEach(
             //        (k, v) -> System.out.println(k + ": " + v)
@@ -121,7 +123,7 @@ public class Query3Client extends AbstractClient{
                     .submit();
 
             Map<PlateInNeighbourhood, Boolean> result2 = future2.get();
-            System.out.println("Finish: " + LocalDateTime.now());
+            System.out.println(LocalDateTime.now());
 
             //result.forEach(
             //        (k, v) -> System.out.println(k + ": " + v)
