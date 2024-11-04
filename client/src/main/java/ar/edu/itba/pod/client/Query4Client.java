@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 
@@ -49,7 +50,7 @@ public class Query4Client extends AbstractClient{
 
         ISet<String> agenciesISet = hazelcastInstance.getSet("agencyNames");
         IMap<String, Infraction> infractionIMap = hazelcastInstance.getMap("infractionsById");
-        IMap<String, Ticket> ticketsIMap=hazelcastInstance.getMap("ticketsByAgency");
+        IMap<Integer, Ticket> ticketsIMap=hazelcastInstance.getMap("ticketsByAgency");
 
         try {
 
@@ -64,25 +65,25 @@ public class Query4Client extends AbstractClient{
                     String[] fields = line.split(";");
                     infractionIMap.put(fields[0], new Infraction(fields[0], fields[1]));
             });
-
+            final AtomicInteger auxKey = new AtomicInteger();
             lines = Files.lines(Paths.get(inPath + "/tickets" + cityParam + ".csv"));
             lines.skip(1).forEach(line -> {
                 String[] fields = line.split(";");
                 Ticket ticket = cityParam.getTicket(fields);
-                logger.info(infractionIMap.getEntryView(ticket.getInfractionId()).getValue().getDescription()+ '-' + ticket.getAgencyName());
-                ticket.setInfractionId(infractionIMap.getEntryView(ticket.getInfractionId()).getValue().getDescription());
-                logger.info("Hola");
-                ticketsIMap.put(ticket.getAgencyName(), ticket);
+                if ( infractionIMap.containsKey(ticket.getInfractionId())) {
+                    logger.info(infractionIMap.getEntryView(ticket.getInfractionId()).getValue().getDescription()+ '-' + ticket.getAgencyName());
+                    ticket.setInfractionId(infractionIMap.get(ticket.getInfractionId()).getDescription());
+                    ticketsIMap.put(auxKey.getAndIncrement(),ticket);
+                }
             });
 
             JobTracker jobTracker = hazelcastInstance.getJobTracker("getMaxDiffPerInfraction");
-            KeyValueSource<String, Ticket> source = KeyValueSource.fromMap(ticketsIMap);
-            Job<String, Ticket> job = jobTracker.newJob(source);
+            KeyValueSource<Integer, Ticket> source = KeyValueSource.fromMap(ticketsIMap);
+            Job<Integer, Ticket> job = jobTracker.newJob(source);
 
             logger.info("Inicio del trabajo map/reduce");
             List<Map.Entry<String, InfractionFinesDifferences>> result = job
-                    .keyPredicate(new AgencyKeyPredicate(agencyName))
-                    .mapper(new FineAmountsPerInfractionMapper())
+                    .mapper(new FineAmountsPerInfractionMapper(agencyName))
                     .reducer(new FineAmountsPerInfractionReducerFactory())
                     .submit(new FineAmountsPerInfractionCollator(nParam)).get();
 
