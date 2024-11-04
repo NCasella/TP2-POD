@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.mappers;
 
-import ar.edu.itba.pod.models.Infraction;
 import ar.edu.itba.pod.models.InfractionAgencyKey;
 import ar.edu.itba.pod.models.InfractionDefWithAgency;
 import com.hazelcast.core.HazelcastInstance;

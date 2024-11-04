@@ -45,9 +45,6 @@ public abstract class AbstractClient {
             ClientNetworkConfig clientNetworkConfig = new ClientNetworkConfig();
             clientNetworkConfig.setAddresses(Arrays.stream(hosts).toList());
 
-                // ! ojo, es temporal
-                clientNetworkConfig.addAddress("127.0.0.1");
-
             // Client Config
             ClientConfig clientConfig = new ClientConfig().setGroupConfig(groupConfig).setNetworkConfig(clientNetworkConfig);
 

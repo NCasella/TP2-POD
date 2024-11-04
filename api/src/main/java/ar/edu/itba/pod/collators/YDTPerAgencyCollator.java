@@ -15,9 +15,9 @@ public class YDTPerAgencyCollator implements Collator<Map.Entry<YearAgencyKey, M
 
     @Override
     public List<Map.Entry<YearAgencyKey, MoneyRaisedPerMonth>> collate(Iterable<Map.Entry<YearAgencyKey, MoneyRaisedPerMonth>> values) {
-        return StreamSupport.stream(values.spliterator(),true)
+        return StreamSupport.stream(values.spliterator(),false)
                 .filter(entry -> entry.getValue().hasRaisedMoneyYDT())
-                .sorted(Map.Entry.<YearAgencyKey, MoneyRaisedPerMonth>comparingByKey(criteria))
+                .sorted(Map.Entry.comparingByKey(criteria))
                 .collect(Collectors.toList());
     }
 

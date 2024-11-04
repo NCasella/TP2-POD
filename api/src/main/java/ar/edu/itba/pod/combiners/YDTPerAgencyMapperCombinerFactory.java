@@ -1,7 +1,6 @@
 package ar.edu.itba.pod.combiners;
 
 import ar.edu.itba.pod.models.MoneyRaisedPerMonth;
-import ar.edu.itba.pod.models.MonthYearAgencyKey;
 import ar.edu.itba.pod.models.Pair;
 import ar.edu.itba.pod.models.YearAgencyKey;
 import com.hazelcast.mapreduce.Combiner;

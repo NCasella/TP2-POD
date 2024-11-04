@@ -10,19 +10,19 @@ import java.util.Objects;
 
 public class MoneyRaisedPerMonth implements DataSerializable {
     private static final int MONTHS = 12;
-    private final long[] months = new long[MONTHS];
+    private long[] months = new long[MONTHS];
     private final static int LAST_MONTH = MONTHS - 1;
 
     public MoneyRaisedPerMonth() {}
-// todo
-    @Override
-    public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
 
+    @Override
+    public void writeData(ObjectDataOutput out) throws IOException {
+        out.writeLongArray(months);
     }
 
     @Override
-    public void readData(ObjectDataInput objectDataInput) throws IOException {
-
+    public void readData(ObjectDataInput in) throws IOException {
+        this.months = in.readLongArray();
     }
 
     @Override
@@ -44,10 +44,6 @@ public class MoneyRaisedPerMonth implements DataSerializable {
         }
     }
 
-    public long getMonthMoney(int monthIndex) {
-        return months[monthIndex];
-    }
-
     public long[] getMoneyRaisedPerMonth() {
         return months;
     }
@@ -65,8 +61,6 @@ public class MoneyRaisedPerMonth implements DataSerializable {
         return result;
     }
 
-    // cuando imprima,
-    // chequeo si = al mes anterior
     public boolean monthRaisedMoneyYDT(int monthIndex) {
         if ( monthIndex > 0 )
             return months[monthIndex] > months[monthIndex - 1];

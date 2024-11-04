@@ -1,14 +1,9 @@
 package ar.edu.itba.pod.reducers;
 
 import ar.edu.itba.pod.models.MoneyRaisedPerMonth;
-import ar.edu.itba.pod.models.MonthYearAgencyKey;
-import ar.edu.itba.pod.models.Pair;
 import ar.edu.itba.pod.models.YearAgencyKey;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
-
-import java.time.Month;
-import java.util.Arrays;
 
 public class YDTPerAgencyReducerFactory implements ReducerFactory<YearAgencyKey,MoneyRaisedPerMonth,MoneyRaisedPerMonth> {
 

@@ -1,18 +1,11 @@
 package ar.edu.itba.pod.client;
 
 import ar.edu.itba.pod.collators.YDTPerAgencyCollator;
-import ar.edu.itba.pod.combiners.MoneyRaisedPerYearMonthAgencyCombinerFactory;
-import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodCombinerFactory;
 import ar.edu.itba.pod.combiners.YDTPerAgencyMapperCombinerFactory;
-import ar.edu.itba.pod.mappers.MoneyRaisedPerYearMonthAgencyMapper;
-import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodMapper;
 import ar.edu.itba.pod.mappers.YDTPerAgencyMapper;
 import ar.edu.itba.pod.models.MoneyRaisedPerMonth;
-import ar.edu.itba.pod.models.MonthYearAgencyKey;
-import ar.edu.itba.pod.models.PlateInNeighbourhood;
 import ar.edu.itba.pod.models.YearAgencyKey;
 import ar.edu.itba.pod.reducers.YDTPerAgencyReducerFactory;
-import ar.edu.itba.pod.reducers.ReincidentPlatesInNeighbourhoodReducerFactory;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
@@ -22,7 +15,6 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -54,31 +46,29 @@ public class Query2Client extends AbstractClient{
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
 
-            //todo: leer agencies.csv
             Set<String> agencies = new HashSet<>();
-            agencies.add("CPD");
+            lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"));
+            lines.skip(1).forEach(agencies::add);
+
 
             System.out.println(LocalDateTime.now());
             KeyValueSource<Integer,String> YDTPerAgencyKeyValueSource = KeyValueSource.fromMap(imap1);
             Job<Integer,String> jobYDTPerAgency = jobTracker.newJob(YDTPerAgencyKeyValueSource);
 
-            ICompletableFuture<List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>>> future = jobYDTPerAgency
-                    .mapper(new YDTPerAgencyMapper(cityParam,agencies))
-                    .combiner(new YDTPerAgencyMapperCombinerFactory())
-                    .reducer(new YDTPerAgencyReducerFactory())
-                    .submit(new YDTPerAgencyCollator());
+             ICompletableFuture<List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>>> future = jobYDTPerAgency
+                                .mapper(new YDTPerAgencyMapper(cityParam,agencies))
+                                .combiner(new YDTPerAgencyMapperCombinerFactory())
+                                .reducer(new YDTPerAgencyReducerFactory())
+                                .submit(new YDTPerAgencyCollator());
 
             List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>> result = future.get();
             System.out.println(LocalDateTime.now());
 
-            //result.forEach(
-            //        (k, v) -> System.out.println(k + ": " + v)
-            //);
             System.out.println("TOTAL: "+result.size());
 
 
             try {
-                Path path= Paths.get(outPath+"/query3.csv");
+                Path path= Paths.get(outPath+"/query2.csv");
                 Files.write(path,"Agency;Year;Month;YTD\n".getBytes());
 
                 for( Map.Entry<YearAgencyKey,MoneyRaisedPerMonth> e : result){

@@ -10,3 +10,5 @@
 *.log
 target/
 .DS_Store
+logs/
+*.csv

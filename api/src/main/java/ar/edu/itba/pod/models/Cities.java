@@ -7,8 +7,19 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 
 public enum Cities {
-    NYC(4,1,3,5,0,2,DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-    CHI(0,4,2,1,3,5,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    NYC(4,1,3,5,0,2,DateTimeFormatter.ofPattern("yyyy-MM-dd")) {
+        //todo
+        @Override
+        public int parseFineAmount(String fineAmount) {
+            return  Integer.parseInt(fineAmount.substring(0,fineAmount.indexOf('.')));
+        }
+    },
+    CHI(0,4,2,1,3,5,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) {
+        @Override
+        public int parseFineAmount(String fineAmount) {
+            return Integer.parseInt(fineAmount);
+        }
+    };
 
     private final int issueDateIndex;
     private final int infractionIdIndex;
@@ -72,11 +83,10 @@ public enum Cities {
         return YearMonth.parse(line[issueDateIndex], dateFormatter);
     }
 
+    abstract public int parseFineAmount(String fineAmount);
+
     public int getFineAmount(String[] line) {
-        return Integer.parseInt(line[fineAmountIndex]);
+        return parseFineAmount(line[fineAmountIndex]);
     }
-    // !sacar
-    public MonthYearAgencyKey getMonthYearAgencyKey(String[] line) {
-        return new MonthYearAgencyKey(YearMonth.parse(line[issueDateIndex], dateFormatter) ,line[agencyIndex]);
-    }
+
 }
