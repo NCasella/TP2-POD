@@ -1,18 +1,18 @@
 package ar.edu.itba.pod.client;
 
-import ar.edu.itba.pod.collators.ReincidentPlatesPerNeighbourhoodCollator;
-import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodByInfractionTypeCombinerFactory;
+import ar.edu.itba.pod.collators.YDTPerAgencyCollator;
+import ar.edu.itba.pod.combiners.MoneyRaisedPerYearMonthAgencyCombinerFactory;
 import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodCombinerFactory;
-import ar.edu.itba.pod.combiners.ReincidentPlatesPerNeighbourhoodCombinerFactory;
-import ar.edu.itba.pod.exceptions.InvalidParamException;
-import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodByInfractionTypeMapper;
+import ar.edu.itba.pod.combiners.YDTPerAgencyMapperCombinerFactory;
+import ar.edu.itba.pod.mappers.MoneyRaisedPerYearMonthAgencyMapper;
 import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodMapper;
-import ar.edu.itba.pod.mappers.ReincidentPlatesPerNeighbourhoodMapper;
+import ar.edu.itba.pod.mappers.YDTPerAgencyMapper;
+import ar.edu.itba.pod.models.MoneyRaisedPerMonth;
+import ar.edu.itba.pod.models.MonthYearAgencyKey;
 import ar.edu.itba.pod.models.PlateInNeighbourhood;
-import ar.edu.itba.pod.models.PlateInfractionInNeighbourhood;
-import ar.edu.itba.pod.reducers.ReincidentPlatesInNeighbourhoodByInfractionTypeReducerFactory;
+import ar.edu.itba.pod.models.YearAgencyKey;
+import ar.edu.itba.pod.reducers.YDTPerAgencyReducerFactory;
 import ar.edu.itba.pod.reducers.ReincidentPlatesInNeighbourhoodReducerFactory;
-import ar.edu.itba.pod.reducers.ReincidentPlatesPerNeighbourhoodReducerFactory;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
@@ -23,60 +23,52 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class Query2Client extends AbstractClient{
-    private static final DecimalFormat df = new DecimalFormat("#.##");
     private final String idMap = LocalDateTime.now().toString();
+    private final static int MONTHS = 12;
 
-    // todo (es una copia de la 3)
     @Override
-    protected void runClientCode(){}
-/*
     protected void runClientCode() {
 
         // Key Value Source
-        IMap<Integer, String> imap1 = hazelcastInstance.getMap("ReincidentPlates" + idMap);
-        KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(imap1);
-        IMap<PlateInfractionInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap);
-        IMap<PlateInNeighbourhood,Boolean> imap3 = hazelcastInstance.getMap("ReincidentPlates3" + idMap);
+        IMap<Integer,String> imap1 = hazelcastInstance.getMap("YDTPerAgency" + idMap);
 
         // Job Tracker
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count"+ idMap);
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("query2"+ idMap);
 
-        System.out.println("-------- READING FILE --------");
+        System.out.println("-------- READING FILES --------");
         System.out.println(LocalDateTime.now());
 
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
-
             Stream<String> lines = Files.lines(Paths.get(inPath+"tickets"+cityParam+".csv"), StandardCharsets.UTF_8);
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
 
+            //todo: leer agencies.csv
+            Set<String> agencies = new HashSet<>();
+            agencies.add("CPD");
 
-            // ---------------------------------------------------- JOB 1 ---------------------------------------------------- //
-            System.out.println("-------- JOB 1 --------");
             System.out.println(LocalDateTime.now());
+            KeyValueSource<Integer,String> YDTPerAgencyKeyValueSource = KeyValueSource.fromMap(imap1);
+            Job<Integer,String> jobYDTPerAgency = jobTracker.newJob(YDTPerAgencyKeyValueSource);
 
-            // MapReduce Job
-            Job<Integer, String> jobPlatesInNeighbourhoodByInfractionType = jobTracker.newJob(reincidentPlatesKeyValueSource);
+            ICompletableFuture<List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>>> future = jobYDTPerAgency
+                    .mapper(new YDTPerAgencyMapper(cityParam,agencies))
+                    .combiner(new YDTPerAgencyMapperCombinerFactory())
+                    .reducer(new YDTPerAgencyReducerFactory())
+                    .submit(new YDTPerAgencyCollator());
 
-            ICompletableFuture<Map<PlateInfractionInNeighbourhood,Integer>> future = jobPlatesInNeighbourhoodByInfractionType
-                    .mapper(new ReincidentPlatesInNeighbourhoodByInfractionTypeMapper(fromDateParam, toDateParam, cityParam))
-                    .combiner(new ReincidentPlatesInNeighbourhoodByInfractionTypeCombinerFactory())
-                    .reducer(new ReincidentPlatesInNeighbourhoodByInfractionTypeReducerFactory())
-                    .submit();
-
-            Map<PlateInfractionInNeighbourhood, Integer> result = future.get();
+            List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>> result = future.get();
             System.out.println(LocalDateTime.now());
 
             //result.forEach(
@@ -84,59 +76,24 @@ public class Query2Client extends AbstractClient{
             //);
             System.out.println("TOTAL: "+result.size());
 
-            // ---------------------------------------------------- JOB 2 ---------------------------------------------------- //
-            System.out.println("-------- JOB 2 --------");
-            imap2.putAll(result);
-            System.out.println(LocalDateTime.now());
-            KeyValueSource<PlateInfractionInNeighbourhood,Integer> reincidentPlatesInNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap2);
-            Job<PlateInfractionInNeighbourhood,Integer> jobPlatesInNeighbourhood = jobTracker.newJob(reincidentPlatesInNeightbourhoodKeyValueSource);
-
-            ICompletableFuture<Map<PlateInNeighbourhood,Boolean>> future2 = jobPlatesInNeighbourhood
-                    .mapper(new ReincidentPlatesInNeighbourhoodMapper(nParam))
-                    .combiner(new ReincidentPlatesInNeighbourhoodCombinerFactory())
-                    .reducer(new ReincidentPlatesInNeighbourhoodReducerFactory())
-                    .submit();
-
-            Map<PlateInNeighbourhood, Boolean> result2 = future2.get();
-            System.out.println(LocalDateTime.now());
-
-            //result.forEach(
-            //        (k, v) -> System.out.println(k + ": " + v)
-            //);
-            System.out.println("TOTAL: "+result2.size());
-
-            // ---------------------------------------------------- JOB 3 ---------------------------------------------------- //
-            System.out.println("-------- JOB 3 --------");
-            System.out.println(LocalDateTime.now());
-            imap3.putAll(result2);
-            KeyValueSource<PlateInNeighbourhood,Boolean> reincidentPlatesPerNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap3);
-            Job<PlateInNeighbourhood,Boolean> jobPlatesPerNeighbourhood = jobTracker.newJob(reincidentPlatesPerNeightbourhoodKeyValueSource);
-
-            ICompletableFuture<List<Map.Entry<String,Double>>> future3 = jobPlatesPerNeighbourhood
-                    .mapper(new ReincidentPlatesPerNeighbourhoodMapper() )
-                    .combiner(new ReincidentPlatesPerNeighbourhoodCombinerFactory())
-                    .reducer(new ReincidentPlatesPerNeighbourhoodReducerFactory())
-                    .submit(new ReincidentPlatesPerNeighbourhoodCollator());
-
-            // Wait and retrieve the result
-            List<Map.Entry<String,Double>> result3 = future3.get();
-
-            System.out.println(LocalDateTime.now());
-            // result3.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
-            System.out.println("TOTAL: "+result3.size());
 
             try {
                 Path path= Paths.get(outPath+"/query3.csv");
-                Files.write(path,"County;Percentage\n".getBytes());
+                Files.write(path,"Agency;Year;Month;YTD\n".getBytes());
 
-                for( Map.Entry<String,Double> e : result3){
-                    StringBuilder stringToWrite=new StringBuilder(e.getKey())
-                            .append(";").append( df.format(e.getValue()) ).append("\n");
-                    Files.write(path,stringToWrite.toString().getBytes(), StandardOpenOption.APPEND);
+                for( Map.Entry<YearAgencyKey,MoneyRaisedPerMonth> e : result){
+                    StringBuilder s=new StringBuilder();
+                    String agencyYear = e.getKey().getAgency() + ";" + e.getKey().getYear() + ";";
+                    long[] moneyRaisedPerMonth = e.getValue().getMoneyRaisedPerMonth();
+                    for ( int i=0; i<MONTHS ; i++ ) {
+                        if ( e.getValue().monthRaisedMoneyYDT(i) )
+                            s.append(agencyYear).append(i+1).append(";").append(moneyRaisedPerMonth[i]).append("\n");
+                    }
+                    Files.write(path,s.toString().getBytes(), StandardOpenOption.APPEND);
                 }
 
             } catch (InvalidPathException | NoSuchFileException e) {
-                System.out.println("Invalid path, query3.csv won't be created");
+                System.out.println("Invalid path, query2.csv won't be created");
             }
 
 
@@ -144,12 +101,10 @@ public class Query2Client extends AbstractClient{
             throw new RuntimeException(e);
         } finally {
             imap1.destroy();
-            imap2.destroy();
-            imap3.destroy();
             System.out.println("fin");
         }
     }
-*/
+
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         new Query2Client().clientMain();
     }

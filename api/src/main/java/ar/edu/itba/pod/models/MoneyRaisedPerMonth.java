@@ -5,10 +5,13 @@ import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class MoneyRaisedPerMonth implements DataSerializable {
     private static final int MONTHS = 12;
-    private final double[] months = new double[MONTHS];
+    private final long[] months = new long[MONTHS];
+    private final static int LAST_MONTH = MONTHS - 1;
 
     public MoneyRaisedPerMonth() {}
 // todo
@@ -24,7 +27,33 @@ public class MoneyRaisedPerMonth implements DataSerializable {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return Arrays.hashCode(months);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if ( o == this) return true;
+        if ( o instanceof MoneyRaisedPerMonth m)
+            return Arrays.equals(months, m.months);
+        return false;
+    }
+
+    public void append(MoneyRaisedPerMonth moneyRaisedPerMonth) {
+        for (int i = 0; i < MONTHS; i++) {
+            months[i] += moneyRaisedPerMonth.months[i];
+        }
+    }
+
+    public long getMonthMoney(int monthIndex) {
+        return months[monthIndex];
+    }
+
+    public long[] getMoneyRaisedPerMonth() {
+        return months;
+    }
+
+    public void addFineAmountToMonth(int monthIndex, int amount) {
+        months[monthIndex] += amount;
     }
 
     public MoneyRaisedPerMonth getYDT() {
@@ -38,10 +67,15 @@ public class MoneyRaisedPerMonth implements DataSerializable {
 
     // cuando imprima,
     // chequeo si = al mes anterior
-    public boolean monthYDT(int month) {
-        if ( month > 0 )
-            return months[month] == months[month - 1];
-        return months[month] >0;
+    public boolean monthRaisedMoneyYDT(int monthIndex) {
+        if ( monthIndex > 0 )
+            return months[monthIndex] > months[monthIndex - 1];
+        return months[monthIndex] >0;
 
     }
+
+    public boolean hasRaisedMoneyYDT() {
+        return months[LAST_MONTH] > 0;
+    }
+
 }
