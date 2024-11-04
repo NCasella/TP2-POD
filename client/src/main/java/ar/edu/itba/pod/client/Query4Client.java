@@ -15,6 +15,8 @@ import com.hazelcast.core.ISet;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -27,6 +29,7 @@ import java.util.stream.Stream;
 
 public class Query4Client extends AbstractClient{
     private Integer nParam;
+    Logger logger= LoggerFactory.getLogger(Query1Client.class);
 
     protected void runClientCode() throws IOException, ExecutionException,InterruptedException {
         //unificar chequeos
