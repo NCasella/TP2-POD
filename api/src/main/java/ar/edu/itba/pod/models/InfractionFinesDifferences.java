@@ -41,6 +41,18 @@ public class InfractionFinesDifferences implements DataSerializable, Comparable<
         this.infraction = infraction;
     }
 
+    public void setMaxFine(int maxFine) {
+        this.maxFine = maxFine;
+    }
+
+    public void setMinFine(int minFine) {
+        this.minFine = minFine;
+    }
+
+    public void setDiff(int diff) {
+        this.diff = diff;
+    }
+
     @Override
     public boolean equals(Object obj) {
         return obj == this || (obj instanceof InfractionFinesDifferences inf && this.infraction.equals(inf.infraction) && this.minFine == inf.minFine && this.maxFine== inf.maxFine);
@@ -52,7 +64,7 @@ public class InfractionFinesDifferences implements DataSerializable, Comparable<
 
     @Override
     public String toString(){
-       return infraction + ";" + minFine + ";" + maxFine + ";" + diff;
+       return infraction + ";" + minFine + ";" + maxFine + ";" + diff + '\n';
     }
 
     @Override

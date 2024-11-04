@@ -11,9 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractClient {
@@ -31,10 +30,31 @@ public abstract class AbstractClient {
     protected abstract void runClientCode() throws IOException,ExecutionException,InterruptedException;
 
     public void clientMain() throws InterruptedException, IOException, ExecutionException {
+        if(System.getProperty("addresses")==null){
+            System.out.println("adresses not specified");
+            return;
+        }
         String[] hosts = System.getProperty("addresses").split(";");
-        cityParam=Cities.valueOf(System.getProperty("city"));
-        inPath=System.getProperty("inPath");
-        outPath=System.getProperty("outPath");
+        String cityParamProperty= System.getProperty("city");
+        if(cityParamProperty==null){
+            System.out.println("city parameter not specified");
+            return;
+        }
+        Optional<Cities> citiesOptional= Arrays.stream(Cities.values()).filter((cities -> cities.toString().equals(cityParamProperty))).findAny();
+        if(citiesOptional.isEmpty()){
+            System.out.println("city parameter not valid");
+            return;
+        }
+        cityParam=citiesOptional.get();
+
+        if((inPath=System.getProperty("inPath"))==null){
+            System.out.println("input path not specified");
+            return;
+        }
+        if((outPath=System.getProperty("outPath"))==null){
+            System.out.println("output path not specified");
+            return;
+        }
 
 
         try {
