@@ -65,6 +65,10 @@ public class Query1Client extends AbstractClient{
                 .combiner(new TotalFinesPerInfractionAndAgencyCombinerFactory())
                 .reducer(new TotalFinesPerInfractionAndAgencyReducer())
                 .submit(new TotalFinesPerInfractionAndAgencyCollator()).get();
+
+        logger.info("Fin map/reduce\n");
+        logger.info("Comienza escritura");
+
         Path path=Paths.get(outPath+"/query1.csv");
         Files.write(path,"Infraction;Agency;Tickets\n".getBytes());
 
@@ -73,7 +77,7 @@ public class Query1Client extends AbstractClient{
                             .append(";").append(entry.getKey().getAgency()).append(";").append(entry.getValue()).append("\n");
             Files.write(path,stringToWrite.toString().getBytes(),StandardOpenOption.APPEND);
         }
-        logger.info("Fin del trabajo map/reduce");
+
     }
 
     public static void main(String[] args) throws IOException, ExecutionException,InterruptedException {

@@ -18,6 +18,8 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +43,7 @@ public class Query3Client extends AbstractClient{
     private static final DecimalFormat df = new DecimalFormat("#.##");
     private Integer nParam;
     private final String idMap = LocalDateTime.now().toString();
-
+    Logger logger= LoggerFactory.getLogger(Query3Client.class);
 
     private void getParams() {
         try {
@@ -84,15 +86,17 @@ public class Query3Client extends AbstractClient{
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
 
+            logger.info("Inicio de lectura de archivos de entrada");
             Stream<String> lines = Files.lines(Paths.get(inPath+"tickets"+cityParam+".csv"), StandardCharsets.UTF_8);
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
-
+            logger.info("Fin de lectura de archivos de entrada");
 
             // ---------------------------------------------------- JOB 1 ---------------------------------------------------- //
             System.out.println("-------- JOB 1 --------");
             System.out.println(LocalDateTime.now());
 
+            logger.info("Inicio del trabajo map/reduce 1");
             // MapReduce Job
             Job<Integer, String> jobPlatesInNeighbourhoodByInfractionType = jobTracker.newJob(reincidentPlatesKeyValueSource);
 
@@ -109,11 +113,13 @@ public class Query3Client extends AbstractClient{
             //        (k, v) -> System.out.println(k + ": " + v)
             //);
             System.out.println("TOTAL: "+result.size());
-
+            logger.info("Fin map/reduce 1\n");
             // ---------------------------------------------------- JOB 2 ---------------------------------------------------- //
             System.out.println("-------- JOB 2 --------");
             imap2.putAll(result);
             System.out.println(LocalDateTime.now());
+            logger.info("Inicio del trabajo map/reduce 2");
+
             KeyValueSource<PlateInfractionInNeighbourhood,Integer> reincidentPlatesInNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap2);
             Job<PlateInfractionInNeighbourhood,Integer> jobPlatesInNeighbourhood = jobTracker.newJob(reincidentPlatesInNeightbourhoodKeyValueSource);
 
@@ -130,11 +136,13 @@ public class Query3Client extends AbstractClient{
             //        (k, v) -> System.out.println(k + ": " + v)
             //);
             System.out.println("TOTAL: "+result2.size());
-
+            logger.info("Fin map/reduce 2\n");
             // ---------------------------------------------------- JOB 3 ---------------------------------------------------- //
             System.out.println("-------- JOB 3 --------");
             System.out.println(LocalDateTime.now());
             imap3.putAll(result2);
+            logger.info("Inicio del trabajo map/reduce 3");
+
             KeyValueSource<PlateInNeighbourhood,Boolean> reincidentPlatesPerNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap3);
             Job<PlateInNeighbourhood,Boolean> jobPlatesPerNeighbourhood = jobTracker.newJob(reincidentPlatesPerNeightbourhoodKeyValueSource);
 
@@ -150,6 +158,9 @@ public class Query3Client extends AbstractClient{
             System.out.println(LocalDateTime.now());
             // result3.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
             System.out.println("TOTAL: "+result3.size());
+            logger.info("Fin map/reduce 3\n");
+
+            logger.info("Comienza escritura");
 
             try {
                 Path path= Paths.get(outPath+"/query3.csv");

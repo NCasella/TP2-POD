@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -60,6 +61,7 @@ public class Query4Client extends AbstractClient{
             if (!agenciesISet.contains(agencyName)) {
                 throw new IllegalArgumentException("Invalid agency");
             }
+            logger.info("Inicio de lectura de archivos de entrada");
             lines = Files.lines(Paths.get(inPath + "/infractions" + cityParam + ".csv"));
             lines.skip(1).forEach(line -> {
                     String[] fields = line.split(";");
@@ -71,15 +73,18 @@ public class Query4Client extends AbstractClient{
                 String[] fields = line.split(";");
                 Ticket ticket = cityParam.getTicket(fields);
                 if ( infractionIMap.containsKey(ticket.getInfractionId())) {
-                    logger.info(infractionIMap.getEntryView(ticket.getInfractionId()).getValue().getDescription()+ '-' + ticket.getAgencyName());
+                   // logger.info(infractionIMap.getEntryView(ticket.getInfractionId()).getValue().getDescription()+ '-' + ticket.getAgencyName());
                     ticket.setInfractionId(infractionIMap.get(ticket.getInfractionId()).getDescription());
                     ticketsIMap.put(auxKey.getAndIncrement(),ticket);
                 }
             });
 
+            logger.info("Fin de lectura de archivos de entrada");
+
             JobTracker jobTracker = hazelcastInstance.getJobTracker("getMaxDiffPerInfraction");
             KeyValueSource<Integer, Ticket> source = KeyValueSource.fromMap(ticketsIMap);
             Job<Integer, Ticket> job = jobTracker.newJob(source);
+
 
             logger.info("Inicio del trabajo map/reduce");
             List<Map.Entry<String, InfractionFinesDifferences>> result = job
@@ -87,6 +92,8 @@ public class Query4Client extends AbstractClient{
                     .reducer(new FineAmountsPerInfractionReducerFactory())
                     .submit(new FineAmountsPerInfractionCollator(nParam)).get();
 
+            logger.info("Fin map/reduce\n");
+            logger.info("Comienza escritura");
             try {
                 Path path = Paths.get(outPath + "/query4.csv");
                 Files.write(path, "Infraction;Min;Max;Diff\n".getBytes());
@@ -94,8 +101,10 @@ public class Query4Client extends AbstractClient{
                     Files.write(path, entry.getValue().toString().getBytes(), StandardOpenOption.APPEND);
                 }
             } catch (InvalidPathException | NoSuchFileException e) {
-                System.out.println("Invalid path, query3.csv won't be created");
+                System.out.println("Invalid path, query4.csv won't be created");
             }
+            logger.info("Fin escritura");
+
         } catch (ExecutionException | InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }finally {
@@ -103,7 +112,7 @@ public class Query4Client extends AbstractClient{
             infractionIMap.destroy();
             ticketsIMap.destroy();
         }
-        logger.info("Fin del trabajo map/reduce");
+
     }
     public static void main(String[] args) throws IOException, ExecutionException,InterruptedException {
         new Query4Client().clientMain();

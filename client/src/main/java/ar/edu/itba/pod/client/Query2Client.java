@@ -11,6 +11,8 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,6 +29,7 @@ import java.util.stream.Stream;
 public class Query2Client extends AbstractClient{
     private final String idMap = LocalDateTime.now().toString();
     private final static int MONTHS = 12;
+    Logger logger= LoggerFactory.getLogger(Query2Client.class);
 
     @Override
     protected void runClientCode() {
@@ -39,6 +42,7 @@ public class Query2Client extends AbstractClient{
 
         System.out.println("-------- READING FILES --------");
         System.out.println(LocalDateTime.now());
+        logger.info("Inicio de lectura de archivos de entrada");
 
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
@@ -50,11 +54,13 @@ public class Query2Client extends AbstractClient{
             lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"));
             lines.skip(1).forEach(agencies::add);
 
-
             System.out.println(LocalDateTime.now());
+            logger.info("Fin de lectura de archivos de entrada");
+
             KeyValueSource<Integer,String> YDTPerAgencyKeyValueSource = KeyValueSource.fromMap(imap1);
             Job<Integer,String> jobYDTPerAgency = jobTracker.newJob(YDTPerAgencyKeyValueSource);
 
+            logger.info("Inicio del trabajo map/reduce");
              ICompletableFuture<List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>>> future = jobYDTPerAgency
                                 .mapper(new YDTPerAgencyMapper(cityParam,agencies))
                                 .combiner(new YDTPerAgencyMapperCombinerFactory())
@@ -66,6 +72,8 @@ public class Query2Client extends AbstractClient{
 
             System.out.println("TOTAL: "+result.size());
 
+            logger.info("Fin map/reduce\n");
+            logger.info("Comienza escritura");
 
             try {
                 Path path= Paths.get(outPath+"/query2.csv");
@@ -81,7 +89,7 @@ public class Query2Client extends AbstractClient{
                     }
                     Files.write(path,s.toString().getBytes(), StandardOpenOption.APPEND);
                 }
-
+                logger.info("Fin escritura");
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query2.csv won't be created");
             }
