@@ -20,12 +20,8 @@ public class FineAmountsPerInfractionReducerFactory implements ReducerFactory<St
 
         @Override
         public void reduce(Integer value){
-            if (value < min){
-                min = value;
-            }
-            if (value > max){
-                max = value;
-            }
+            min = Math.min(min,value);
+            max = Math.max(max, value);
         }
 
         @Override
