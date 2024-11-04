@@ -47,11 +47,14 @@
 		<appender-ref ref="Query4Appender"/>
 	</logger>
 
-	<logger name="ar.edu.itba.pod.client.ReincidentPlatesPerNeighbourhoodClient">
+	<logger name="ar.edu.itba.pod.client.Query3Client">
 		<level value="INFO"/>
 		<appender-ref ref="Query3Appender"/>
 	</logger>
-
+	<logger name="ar.edu.itba.pod.client.Query2Client">
+		<level value="INFO"/>
+		<appender-ref ref="Query2Appender"/>
+	</logger>
 
 
 </log4j:configuration>

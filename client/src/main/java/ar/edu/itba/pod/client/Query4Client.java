@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 public class Query4Client extends AbstractClient{
     private Integer nParam;
-    Logger logger= LoggerFactory.getLogger(Query1Client.class);
+    Logger logger= LoggerFactory.getLogger(Query4Client.class);
 
     protected void runClientCode() throws IOException, ExecutionException,InterruptedException {
         //unificar chequeos

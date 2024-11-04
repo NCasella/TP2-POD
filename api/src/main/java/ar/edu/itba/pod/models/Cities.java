@@ -2,6 +2,8 @@ package ar.edu.itba.pod.models;
 
 import java.time.LocalDate;
 
+import java.time.Year;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 
 public enum Cities {
@@ -60,5 +62,21 @@ public enum Cities {
     public PlateInfractionInNeighbourhood getPlateInfractionInNeighbourhood(String[] line) {
         return new PlateInfractionInNeighbourhood(line[plateNumberIndex],line[neighbourhoodIndex], line[infractionIdIndex] );
 
+    }
+
+    public String getAgency(String[] line) {
+        return line[agencyIndex];
+    }
+
+    public YearMonth getYearMonthfromIssueDate(String[] line) {
+        return YearMonth.parse(line[issueDateIndex], dateFormatter);
+    }
+
+    public int getFineAmount(String[] line) {
+        return Integer.parseInt(line[fineAmountIndex]);
+    }
+    // !sacar
+    public MonthYearAgencyKey getMonthYearAgencyKey(String[] line) {
+        return new MonthYearAgencyKey(YearMonth.parse(line[issueDateIndex], dateFormatter) ,line[agencyIndex]);
     }
 }
