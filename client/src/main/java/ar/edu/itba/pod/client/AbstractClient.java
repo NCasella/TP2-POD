@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractClient {
 
-    protected static final Logger logger = LoggerFactory.getLogger(Client.class);
+
     protected String inPath;
     protected String outPath;
     protected Cities cityParam;
