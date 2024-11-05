@@ -14,7 +14,7 @@ public class TotalFinesPerInfractionAndAgencyCollator implements Collator<Map.En
                 compare=o1.getKey().getInfraction().compareTo(o2.getKey().getInfraction());
             }
             if(compare==0){
-                compare=o1.getKey().getAgency().compareTo(o2.getKey().getInfraction());
+                compare=o1.getKey().getAgency().compareTo(o2.getKey().getAgency());
             }
         return compare;
         });
