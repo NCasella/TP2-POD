@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 
 public enum Cities {
     NYC(4,1,3,5,0,2,DateTimeFormatter.ofPattern("yyyy-MM-dd")) {
-        //todo
         @Override
         public int parseFineAmount(String fineAmount) {
             return  Integer.parseInt(fineAmount.substring(0,fineAmount.indexOf('.')));
@@ -79,7 +78,7 @@ public enum Cities {
         return line[agencyIndex];
     }
 
-    public YearMonth getYearMonthfromIssueDate(String[] line) {
+    public YearMonth getYearMonthFromIssueDate(String[] line) {
         return YearMonth.parse(line[issueDateIndex], dateFormatter);
     }
 

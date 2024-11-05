@@ -6,12 +6,11 @@ import com.hazelcast.nio.serialization.DataSerializable;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Objects;
 
 public class MoneyRaisedPerMonth implements DataSerializable {
     private static final int MONTHS = 12;
-    private long[] months = new long[MONTHS];
     private final static int LAST_MONTH = MONTHS - 1;
+    private long[] months = new long[MONTHS];
 
     public MoneyRaisedPerMonth() {}
 
@@ -38,9 +37,9 @@ public class MoneyRaisedPerMonth implements DataSerializable {
         return false;
     }
 
-    public void append(MoneyRaisedPerMonth moneyRaisedPerMonth) {
+    public void append(MoneyRaisedPerMonth otherMoneyRaisedPerMonth) {
         for (int i = 0; i < MONTHS; i++) {
-            months[i] += moneyRaisedPerMonth.months[i];
+            months[i] += otherMoneyRaisedPerMonth.months[i];
         }
     }
 
@@ -61,7 +60,7 @@ public class MoneyRaisedPerMonth implements DataSerializable {
         return result;
     }
 
-    public boolean monthRaisedMoneyYDT(int monthIndex) {
+    public boolean hasMonthRaisedMoneyYDT(int monthIndex) {
         if ( monthIndex > 0 )
             return months[monthIndex] > months[monthIndex - 1];
         return months[monthIndex] >0;
