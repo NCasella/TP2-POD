@@ -25,7 +25,7 @@ public class YDTPerAgencyMapper implements Mapper<Integer,String,YearAgencyKey, 
         final String agency = city.getAgency(s);
 
         if ( agencies.contains(agency) ) {
-            final YearMonth yearMonth = city.getYearMonthfromIssueDate(s);
+            final YearMonth yearMonth = city.getYearMonthFromIssueDate(s);
             context.emit( new YearAgencyKey(yearMonth.getYear(),agency), new Pair<>(yearMonth.getMonth(), city.getFineAmount(s)));
         }
     }

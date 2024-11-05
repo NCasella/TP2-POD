@@ -84,7 +84,7 @@ public class Query2Client extends AbstractClient{
                     String agencyYear = e.getKey().getAgency() + ";" + e.getKey().getYear() + ";";
                     long[] moneyRaisedPerMonth = e.getValue().getMoneyRaisedPerMonth();
                     for ( int i=0; i<MONTHS ; i++ ) {
-                        if ( e.getValue().monthRaisedMoneyYDT(i) )
+                        if ( e.getValue().hasMonthRaisedMoneyYDT(i) )
                             s.append(agencyYear).append(i+1).append(";").append(moneyRaisedPerMonth[i]).append("\n");
                     }
                     Files.write(path,s.toString().getBytes(), StandardOpenOption.APPEND);
