@@ -43,7 +43,7 @@ public class Query3Client extends AbstractClient{
     private static final DecimalFormat df = new DecimalFormat("#.##");
     private Integer nParam;
     private final String idMap = LocalDateTime.now().toString();
-    Logger logger= LoggerFactory.getLogger(Query3Client.class);
+    private Logger logger;
 
     private void getParams() {
         try {
@@ -69,6 +69,8 @@ public class Query3Client extends AbstractClient{
 
     @Override
     protected void runClientCode() {
+        System.setProperty("client.log.file",outPath+"/time3.txt");
+        logger=LoggerFactory.getLogger(Query3Client.class);
         getParams();
 
         // Key Value Source
@@ -87,7 +89,7 @@ public class Query3Client extends AbstractClient{
         try  {
 
             logger.info("Inicio de lectura de archivos de entrada");
-            Stream<String> lines = Files.lines(Paths.get(inPath+"tickets"+cityParam+".csv"), StandardCharsets.UTF_8);
+            Stream<String> lines = Files.lines(Paths.get(inPath+"ticketsMini"+cityParam+".csv"), StandardCharsets.UTF_8);
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
             logger.info("Fin de lectura de archivos de entrada");
@@ -171,7 +173,7 @@ public class Query3Client extends AbstractClient{
                             .append(";").append( df.format(e.getValue()) ).append("\n");
                     Files.write(path,stringToWrite.toString().getBytes(), StandardOpenOption.APPEND);
                 }
-
+                logger.info("Fin escritura");
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query3.csv won't be created");
             }

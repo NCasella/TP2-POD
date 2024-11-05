@@ -8,6 +8,7 @@
 *.tar.gz
 *.rar
 *.log
+*.txt
 target/
 .DS_Store
 logs/
