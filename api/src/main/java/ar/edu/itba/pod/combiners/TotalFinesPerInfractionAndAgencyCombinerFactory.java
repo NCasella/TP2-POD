@@ -22,5 +22,10 @@ public class TotalFinesPerInfractionAndAgencyCombinerFactory implements Combiner
             return sum;
         }
 
+        @Override
+        public void reset(){
+            sum = 0;
+        }
+
     }
 }
