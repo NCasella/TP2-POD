@@ -3,58 +3,19 @@
 <log4j:configuration debug="false"
 	xmlns:log4j='http://jakarta.apache.org/log4j/'>
 
-	<appender name="Query3Appender" class="org.apache.log4j.FileAppender">
-		<param name="File" value="logs/times3.txt"/>
+	<appender name="ClientAppender" class="org.apache.log4j.FileAppender">
+		<param name="File" value="${client.log.file}"/>
 		<param name="Append" value="true"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss:SSSS} %p [%t] %c{1} (%F:%L) - %m%n"/>
 		</layout>
 	</appender>
 
-
-	<appender name="Query4Appender" class="org.apache.log4j.FileAppender">
-		<param name="File" value="logs/times4.txt"/>
-		<param name="Append" value="true"/>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss:SSSS} %p [%t] %c{1} (%F:%L) - %m%n"/>
-		</layout>
-	</appender>
-
-
-	<appender name="Query2Appender" class="org.apache.log4j.FileAppender">
-		<param name="File" value="logs/times2.txt"/>
-		<param name="Append" value="true"/>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss:SSSS} %p [%t] %c{1} (%F:%L) - %m%n"/>
-		</layout>
-	</appender>
-
-	<appender name="Query1Appender" class="org.apache.log4j.FileAppender">
-		<param name="File" value="logs/times1.txt"/>
-		<param name="Append" value="true"/>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss:SSSS} %p [%t] %c{1} (%F:%L) - %m%n"/>
-		</layout>
-	</appender>
-
-	<logger name="ar.edu.itba.pod.client.Query1Client">
+	<logger name="ar.edu.itba.pod.client">
 		<level value="INFO"/>
-		<appender-ref ref="Query1Appender"/>
+		<appender-ref ref="ClientAppender"/>
 	</logger>
 
-	<logger name="ar.edu.itba.pod.client.Query4Client">
-		<level value="INFO"/>
-		<appender-ref ref="Query4Appender"/>
-	</logger>
-
-	<logger name="ar.edu.itba.pod.client.Query3Client">
-		<level value="INFO"/>
-		<appender-ref ref="Query3Appender"/>
-	</logger>
-	<logger name="ar.edu.itba.pod.client.Query2Client">
-		<level value="INFO"/>
-		<appender-ref ref="Query2Appender"/>
-	</logger>
 
 
 </log4j:configuration>

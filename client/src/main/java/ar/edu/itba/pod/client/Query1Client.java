@@ -31,6 +31,7 @@ public class Query1Client extends AbstractClient{
     @Override
     protected void runClientCode() throws IOException,ExecutionException,InterruptedException{
 
+        System.setProperty("client.log.file",outPath+"/time1.txt");
         Logger logger = LoggerFactory.getLogger(Query1Client.class);
         IMap<Long, InfractionDefWithAgency> ticketsMap= hazelcastInstance.getMap("g7-tickets");
         IMap<String, String> violationsMap= hazelcastInstance.getMap("g7-violations");
@@ -41,7 +42,7 @@ public class Query1Client extends AbstractClient{
         try(Stream<String> lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"))){
             lines.skip(1).forEach(agenciesSet::add);
         }
-        try(Stream<String> lines= Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv")).parallel()) {
+        try(Stream<String> lines= Files.lines(Paths.get(inPath+"/ticketsMini"+cityParam+".csv")).parallel()) {
             lines.skip(1).forEach(line -> {
                 String[] fields = line.split(";");
                 ticketsMap.put(atomicLong.getAndIncrement(), new InfractionDefWithAgency(fields[cityParam.getInfractionIdIndex()],fields[cityParam.getAgencyIndex()]));
@@ -77,6 +78,7 @@ public class Query1Client extends AbstractClient{
                             .append(";").append(entry.getKey().getAgency()).append(";").append(entry.getValue()).append("\n");
             Files.write(path,stringToWrite.toString().getBytes(),StandardOpenOption.APPEND);
         }
+        logger.info("Fin escritura");
 
     }
 

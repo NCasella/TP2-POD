@@ -43,7 +43,7 @@ public class Query3Client extends AbstractClient{
     private static final DecimalFormat df = new DecimalFormat("#.##");
     private Integer nParam;
     private final String idMap = LocalDateTime.now().toString();
-    Logger logger= LoggerFactory.getLogger(Query3Client.class);
+    private Logger logger;
 
     private void getParams() {
         try {
@@ -69,6 +69,8 @@ public class Query3Client extends AbstractClient{
 
     @Override
     protected void runClientCode() {
+        System.setProperty("client.log.file",outPath+"/time3.txt");
+        logger=LoggerFactory.getLogger(Query3Client.class);
         getParams();
 
         // Key Value Source
@@ -171,7 +173,7 @@ public class Query3Client extends AbstractClient{
                             .append(";").append(e.getValue().toString().formatted("%.2f%%")).append('%').append("\n");
                     Files.write(path,stringToWrite.toString().getBytes(), StandardOpenOption.APPEND);
                 }
-
+                logger.info("Fin escritura");
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query3.csv won't be created");
             }

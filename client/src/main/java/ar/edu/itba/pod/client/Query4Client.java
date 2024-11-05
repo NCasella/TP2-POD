@@ -31,10 +31,12 @@ import java.util.stream.Stream;
 
 public class Query4Client extends AbstractClient{
     private Integer nParam;
-    Logger logger= LoggerFactory.getLogger(Query4Client.class);
+    private Logger logger;
 
+    @Override
     protected void runClientCode() throws IOException, ExecutionException,InterruptedException {
-        //unificar chequeos
+        System.setProperty("client.log.file",outPath+"/time4.txt");
+        logger=LoggerFactory.getLogger(Query4Client.class);
         if (System.getProperty("city") == null){
             throw new IllegalArgumentException("City is needed");
         }else if (!(System.getProperty("city").equals("CHI") || System.getProperty("city").equals("NYC"))){
@@ -68,7 +70,7 @@ public class Query4Client extends AbstractClient{
                     infractionIMap.put(fields[0], new Infraction(fields[0], fields[1]));
             });
             final AtomicInteger auxKey = new AtomicInteger();
-            lines = Files.lines(Paths.get(inPath + "/tickets" + cityParam + ".csv"));
+            lines = Files.lines(Paths.get(inPath + "/ticketsMini" + cityParam + ".csv"));
             lines.skip(1).forEach(line -> {
                 String[] fields = line.split(";");
                 Ticket ticket = cityParam.getTicket(fields);
