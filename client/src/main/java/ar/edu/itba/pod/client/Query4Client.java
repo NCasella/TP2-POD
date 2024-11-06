@@ -49,7 +49,7 @@ public class Query4Client extends AbstractClient{
             throw new IllegalArgumentException("agency is needed");
         }
         nParam=Integer.parseInt(System.getProperty("n"));
-        String agencyName = System.getProperty("agency");
+        String agencyName = System.getProperty("agency").replace("_"," ");
 
         ISet<String> agenciesISet = hazelcastInstance.getSet("agencyNames");
         IMap<String, Infraction> infractionIMap = hazelcastInstance.getMap("infractionsById");
