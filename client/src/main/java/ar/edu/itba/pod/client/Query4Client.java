@@ -70,7 +70,7 @@ public class Query4Client extends AbstractClient{
                     infractionIMap.put(fields[0], new Infraction(fields[0], fields[1]));
             });
             final AtomicInteger auxKey = new AtomicInteger();
-            lines = Files.lines(Paths.get(inPath + "/tickets" + cityParam + ".csv"));
+            lines = Files.lines(Paths.get(inPath + "/tickets" + cityParam + ".csv")).parallel();
             lines.skip(1).forEach(line -> {
                 String[] fields = line.split(";");
                 Ticket ticket = cityParam.getTicket(fields);

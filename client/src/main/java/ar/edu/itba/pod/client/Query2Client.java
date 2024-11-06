@@ -47,7 +47,7 @@ public class Query2Client extends AbstractClient{
 
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
-            Stream<String> lines = Files.lines(Paths.get(inPath+"ticketsMini"+cityParam+".csv"), StandardCharsets.UTF_8);
+            Stream<String> lines = Files.lines(Paths.get(inPath+"tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
 

@@ -89,7 +89,7 @@ public class Query3Client extends AbstractClient{
         try  {
 
             logger.info("Inicio de lectura de archivos de entrada");
-            Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8);
+            Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
             logger.info("Fin de lectura de archivos de entrada");
