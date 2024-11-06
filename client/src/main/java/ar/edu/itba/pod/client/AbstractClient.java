@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractClient {
 
-
+    protected int queryNumber;
     protected String inPath;
     protected String outPath;
     protected Cities cityParam;
@@ -56,7 +56,7 @@ public abstract class AbstractClient {
             return;
         }
 
-
+        System.setProperty("client.log.file",String.format("%s/time%d.txt",outPath,queryNumber));
         try {
             // Group Config
             GroupConfig groupConfig = new GroupConfig().setName("g7").setPassword("g7pass");

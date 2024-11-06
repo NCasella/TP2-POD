@@ -45,6 +45,8 @@ public class Query3Client extends AbstractClient{
     private final String idMap = LocalDateTime.now().toString();
     private Logger logger;
 
+    public Query3Client(){this.queryNumber=3;}
+
     private void getParams() {
         try {
             nParam=Integer.parseInt(System.getProperty("n"));
@@ -69,7 +71,7 @@ public class Query3Client extends AbstractClient{
 
     @Override
     protected void runClientCode() {
-        System.setProperty("client.log.file",outPath+"/time3.txt");
+
         logger=LoggerFactory.getLogger(Query3Client.class);
         getParams();
 

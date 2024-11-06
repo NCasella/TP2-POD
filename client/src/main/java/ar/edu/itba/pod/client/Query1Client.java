@@ -28,10 +28,11 @@ import java.util.stream.Stream;
 
 public class Query1Client extends AbstractClient{
 
+    public Query1Client(){this.queryNumber=1;}
+
     @Override
     protected void runClientCode() throws IOException,ExecutionException,InterruptedException{
 
-        System.setProperty("client.log.file",outPath+"/time1.txt");
         Logger logger = LoggerFactory.getLogger(Query1Client.class);
         IMap<Long, InfractionDefWithAgency> ticketsMap= hazelcastInstance.getMap("g7-tickets");
         IMap<String, String> violationsMap= hazelcastInstance.getMap("g7-violations");

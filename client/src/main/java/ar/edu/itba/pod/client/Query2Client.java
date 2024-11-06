@@ -31,9 +31,10 @@ public class Query2Client extends AbstractClient{
     private final static int MONTHS = 12;
     private Logger logger;
 
+    public Query2Client(){this.queryNumber=2;}
+
     @Override
     protected void runClientCode() {
-        System.setProperty("client.log.file",outPath+"/time2.txt");
         logger=LoggerFactory.getLogger(Query2Client.class);
         // Key Value Source
         IMap<Integer,String> imap1 = hazelcastInstance.getMap("YDTPerAgency" + idMap);
@@ -47,7 +48,7 @@ public class Query2Client extends AbstractClient{
 
         final AtomicInteger auxKey = new AtomicInteger();
         try  {
-            Stream<String> lines = Files.lines(Paths.get(inPath+"tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();
+            Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();
             lines = lines.skip(1);
             lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
 

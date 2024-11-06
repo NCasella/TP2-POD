@@ -33,9 +33,9 @@ public class Query4Client extends AbstractClient{
     private Integer nParam;
     private Logger logger;
 
+    public Query4Client(){this.queryNumber=4;}
     @Override
     protected void runClientCode() throws IOException, ExecutionException,InterruptedException {
-        System.setProperty("client.log.file",outPath+"/time4.txt");
         logger=LoggerFactory.getLogger(Query4Client.class);
         if (System.getProperty("city") == null){
             throw new IllegalArgumentException("City is needed");
