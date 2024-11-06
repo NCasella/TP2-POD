@@ -42,7 +42,7 @@ public class Query1Client extends AbstractClient{
         try(Stream<String> lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"))){
             lines.skip(1).forEach(agenciesSet::add);
         }
-        try(Stream<String> lines= Files.lines(Paths.get(inPath+"/ticketsMini"+cityParam+".csv")).parallel()) {
+        try(Stream<String> lines= Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv")).parallel()) {
             lines.skip(1).forEach(line -> {
                 String[] fields = line.split(";");
                 ticketsMap.put(atomicLong.getAndIncrement(), new InfractionDefWithAgency(fields[cityParam.getInfractionIdIndex()],fields[cityParam.getAgencyIndex()]));
