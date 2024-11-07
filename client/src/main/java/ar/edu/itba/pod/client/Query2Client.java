@@ -42,8 +42,8 @@ public class Query2Client extends AbstractClient{
         // Job Tracker
         JobTracker jobTracker = hazelcastInstance.getJobTracker("query2"+ idMap);
 
-        System.out.println("-------- READING FILES --------");
-        System.out.println(LocalDateTime.now());
+
+
         logger.info("Inicio de lectura de archivos de entrada");
 
         final AtomicInteger auxKey = new AtomicInteger();
@@ -54,7 +54,7 @@ public class Query2Client extends AbstractClient{
         try(Stream<String> lines = Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"))){
             lines.skip(1).forEach(agencies::add);
         }
-            System.out.println(LocalDateTime.now());
+
             logger.info("Fin de lectura de archivos de entrada");
 
             KeyValueSource<Integer,String> YDTPerAgencyKeyValueSource = KeyValueSource.fromMap(imap1);
@@ -68,9 +68,6 @@ public class Query2Client extends AbstractClient{
                                 .submit(new YDTPerAgencyCollator());
 
             List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>> result = future.get();
-            System.out.println(LocalDateTime.now());
-
-            System.out.println("TOTAL: "+result.size());
 
             logger.info("Fin map/reduce");
             logger.info("Comienza escritura");
@@ -94,7 +91,6 @@ public class Query2Client extends AbstractClient{
                 System.out.println("Invalid path, query2.csv won't be created");
             }
         imap1.destroy();
-        System.out.println("fin");
         }
 
 

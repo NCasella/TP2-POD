@@ -84,8 +84,7 @@ public class Query3Client extends AbstractClient{
         // Job Tracker
         JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count"+ idMap);
 
-        System.out.println("-------- READING FILE --------");
-        System.out.println(LocalDateTime.now());
+
 
         final AtomicInteger auxKey = new AtomicInteger();
         try (Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel()) {
@@ -95,8 +94,7 @@ public class Query3Client extends AbstractClient{
             logger.info("Fin de lectura de archivos de entrada");
 
             // ---------------------------------------------------- JOB 1 ---------------------------------------------------- //
-            System.out.println("-------- JOB 1 --------");
-            System.out.println(LocalDateTime.now());
+
 
             logger.info("Inicio del trabajo map/reduce 1");
             // MapReduce Job
@@ -109,17 +107,16 @@ public class Query3Client extends AbstractClient{
                     .submit();
 
             Map<PlateInfractionInNeighbourhood, Integer> result = future.get();
-            System.out.println(LocalDateTime.now());
+
 
             //result.forEach(
             //        (k, v) -> System.out.println(k + ": " + v)
             //);
-            System.out.println("TOTAL: "+result.size());
+
             logger.info("Fin map/reduce 1");
             // ---------------------------------------------------- JOB 2 ---------------------------------------------------- //
-            System.out.println("-------- JOB 2 --------");
+
             imap2.putAll(result);
-            System.out.println(LocalDateTime.now());
             logger.info("Inicio del trabajo map/reduce 2");
 
             KeyValueSource<PlateInfractionInNeighbourhood,Integer> reincidentPlatesInNeightbourhoodKeyValueSource = KeyValueSource.fromMap(imap2);
@@ -132,16 +129,14 @@ public class Query3Client extends AbstractClient{
                     .submit();
 
             Map<PlateInNeighbourhood, Boolean> result2 = future2.get();
-            System.out.println(LocalDateTime.now());
+
 
             //result.forEach(
             //        (k, v) -> System.out.println(k + ": " + v)
             //);
-            System.out.println("TOTAL: "+result2.size());
+
             logger.info("Fin map/reduce 2");
             // ---------------------------------------------------- JOB 3 ---------------------------------------------------- //
-            System.out.println("-------- JOB 3 --------");
-            System.out.println(LocalDateTime.now());
             imap3.putAll(result2);
             logger.info("Inicio del trabajo map/reduce 3");
 
@@ -157,9 +152,9 @@ public class Query3Client extends AbstractClient{
             // Wait and retrieve the result
             List<Map.Entry<String,Double>> result3 = future3.get();
 
-            System.out.println(LocalDateTime.now());
+
             // result3.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
-            System.out.println("TOTAL: "+result3.size());
+
             logger.info("Fin map/reduce 3");
 
             logger.info("Comienza escritura");
@@ -180,7 +175,7 @@ public class Query3Client extends AbstractClient{
         imap1.destroy();
         imap2.destroy();
         imap3.destroy();
-        System.out.println("fin");
+
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
