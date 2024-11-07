@@ -10,7 +10,11 @@ import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -55,8 +59,11 @@ public abstract class AbstractClient {
             System.out.println("output path not specified");
             return;
         }
+        String logPathString=String.format("%s/time%d.txt",outPath,queryNumber);
+        Path logPath= Paths.get(logPathString);
+        Files.deleteIfExists(logPath);
 
-        System.setProperty("client.log.file",String.format("%s/time%d.txt",outPath,queryNumber));
+        System.setProperty("client.log.file",logPathString);
         try {
             // Group Config
             GroupConfig groupConfig = new GroupConfig().setName("g7").setPassword("g7pass");
