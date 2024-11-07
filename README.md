@@ -33,7 +33,7 @@ Luego al entrar a la carpeta *tpe2-g7-client-1.0-SNAPSHOT* se encontraran los si
 
 Todos los scripts de cliente reciben los siguientes argumentos:
 
-- -Dadresses: Las direcciones IP de los nodos separados por punto y coma.
+- -Daddresses: Las direcciones IP de los nodos separados por punto y coma.
 
 - -DinPath: Path en el que se encuentran los archivos .csv de multas, infracciones y tickets. 
 
