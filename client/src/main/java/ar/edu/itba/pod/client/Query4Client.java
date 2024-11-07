@@ -95,7 +95,7 @@ public class Query4Client extends AbstractClient {
                 .reducer(new FineAmountsPerInfractionReducerFactory())
                 .submit(new FineAmountsPerInfractionCollator(nParam)).get();
 
-        logger.info("Fin map/reduce\n");
+        logger.info("Fin map/reduce");
         logger.info("Comienza escritura");
         try {
             Path path = Paths.get(outPath + "/query4.csv");
@@ -106,7 +106,7 @@ public class Query4Client extends AbstractClient {
         } catch (InvalidPathException | NoSuchFileException e) {
             System.out.println("Invalid path, query4.csv won't be created");
         }
-        logger.info("Fin escritura");
+        logger.info("Fin escritura\n");
         agenciesISet.destroy();
         infractionIMap.destroy();
         ticketsIMap.destroy();

@@ -39,7 +39,7 @@ public class Query1Client extends AbstractClient{
         ISet<String> agenciesSet= hazelcastInstance.getSet("g7-agencies");
         AtomicLong atomicLong=new AtomicLong();
 
-        logger.info("Inicio de la lectura del archivo");
+        logger.info("Inicio de lectura de archivos de entrada");
         try(Stream<String> lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"))){
             lines.skip(1).forEach(agenciesSet::add);
         }
@@ -55,7 +55,7 @@ public class Query1Client extends AbstractClient{
                 violationsMap.put(fields[0],fields[1]);
             });
         }
-        logger.info("Fin de lectura del archivo");
+        logger.info("Fin de lectura de archivos de entrada");
 
         JobTracker jobTracker=hazelcastInstance.getJobTracker("g7-totalFinesPerInfractionAndAgency");
         KeyValueSource<Long, InfractionDefWithAgency> source=KeyValueSource.fromMap(ticketsMap);
@@ -68,7 +68,7 @@ public class Query1Client extends AbstractClient{
                 .reducer(new TotalFinesPerInfractionAndAgencyReducer())
                 .submit(new TotalFinesPerInfractionAndAgencyCollator()).get();
 
-        logger.info("Fin map/reduce\n");
+        logger.info("Inicio del trabajo map/reduce");
         logger.info("Comienza escritura");
 
         Path path=Paths.get(outPath+"/query1.csv");
@@ -79,7 +79,7 @@ public class Query1Client extends AbstractClient{
                             .append(";").append(entry.getKey().getAgency()).append(";").append(entry.getValue()).append("\n");
             Files.write(path,stringToWrite.toString().getBytes(),StandardOpenOption.APPEND);
         }
-        logger.info("Fin escritura");
+        logger.info("Fin escritura\n");
 
     }
 

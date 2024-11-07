@@ -72,7 +72,7 @@ public class Query2Client extends AbstractClient{
 
             System.out.println("TOTAL: "+result.size());
 
-            logger.info("Fin map/reduce\n");
+            logger.info("Fin map/reduce");
             logger.info("Comienza escritura");
 
             try {
@@ -89,7 +89,7 @@ public class Query2Client extends AbstractClient{
                     }
                     Files.write(path,s.toString().getBytes(), StandardOpenOption.APPEND);
                 }
-                logger.info("Fin escritura");
+                logger.info("Fin escritura\n");
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query2.csv won't be created");
             }

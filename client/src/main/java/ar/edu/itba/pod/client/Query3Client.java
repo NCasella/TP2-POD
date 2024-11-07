@@ -115,7 +115,7 @@ public class Query3Client extends AbstractClient{
             //        (k, v) -> System.out.println(k + ": " + v)
             //);
             System.out.println("TOTAL: "+result.size());
-            logger.info("Fin map/reduce 1\n");
+            logger.info("Fin map/reduce 1");
             // ---------------------------------------------------- JOB 2 ---------------------------------------------------- //
             System.out.println("-------- JOB 2 --------");
             imap2.putAll(result);
@@ -138,7 +138,7 @@ public class Query3Client extends AbstractClient{
             //        (k, v) -> System.out.println(k + ": " + v)
             //);
             System.out.println("TOTAL: "+result2.size());
-            logger.info("Fin map/reduce 2\n");
+            logger.info("Fin map/reduce 2");
             // ---------------------------------------------------- JOB 3 ---------------------------------------------------- //
             System.out.println("-------- JOB 3 --------");
             System.out.println(LocalDateTime.now());
@@ -160,7 +160,7 @@ public class Query3Client extends AbstractClient{
             System.out.println(LocalDateTime.now());
             // result3.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
             System.out.println("TOTAL: "+result3.size());
-            logger.info("Fin map/reduce 3\n");
+            logger.info("Fin map/reduce 3");
 
             logger.info("Comienza escritura");
 
@@ -173,7 +173,7 @@ public class Query3Client extends AbstractClient{
                             .append(";").append(e.getValue().toString().formatted("%.2f%%")).append('%').append("\n");
                     Files.write(path,stringToWrite.toString().getBytes(), StandardOpenOption.APPEND);
                 }
-                logger.info("Fin escritura");
+                logger.info("Fin escritura\n");
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query3.csv won't be created");
             }
