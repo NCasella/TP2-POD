@@ -70,7 +70,7 @@ public class Query3Client extends AbstractClient{
     }
 
     @Override
-    protected void runClientCode() {
+    protected void runClientCode() throws IOException, ExecutionException, InterruptedException{
 
         logger=LoggerFactory.getLogger(Query3Client.class);
         getParams();
@@ -88,12 +88,10 @@ public class Query3Client extends AbstractClient{
         System.out.println(LocalDateTime.now());
 
         final AtomicInteger auxKey = new AtomicInteger();
-        try  {
-
+        try (Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel()) {
             logger.info("Inicio de lectura de archivos de entrada");
-            Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();
-            lines = lines.skip(1);
-            lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
+            lines.skip(1).forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
+        }
             logger.info("Fin de lectura de archivos de entrada");
 
             // ---------------------------------------------------- JOB 1 ---------------------------------------------------- //
@@ -179,16 +177,10 @@ public class Query3Client extends AbstractClient{
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query3.csv won't be created");
             }
-
-
-        } catch (ExecutionException | InterruptedException | IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            imap1.destroy();
-            imap2.destroy();
-            imap3.destroy();
-            System.out.println("fin");
-        }
+        imap1.destroy();
+        imap2.destroy();
+        imap3.destroy();
+        System.out.println("fin");
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {

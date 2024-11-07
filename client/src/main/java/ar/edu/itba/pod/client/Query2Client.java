@@ -34,7 +34,7 @@ public class Query2Client extends AbstractClient{
     public Query2Client(){this.queryNumber=2;}
 
     @Override
-    protected void runClientCode() {
+    protected void runClientCode() throws IOException,ExecutionException,InterruptedException {
         logger=LoggerFactory.getLogger(Query2Client.class);
         // Key Value Source
         IMap<Integer,String> imap1 = hazelcastInstance.getMap("YDTPerAgency" + idMap);
@@ -47,15 +47,13 @@ public class Query2Client extends AbstractClient{
         logger.info("Inicio de lectura de archivos de entrada");
 
         final AtomicInteger auxKey = new AtomicInteger();
-        try  {
-            Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();
-            lines = lines.skip(1);
-            lines.forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
-
-            Set<String> agencies = new HashSet<>();
-            lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"));
+        try(Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel();) {
+            lines.skip(1).forEach(line -> imap1.put(auxKey.getAndIncrement(), line));
+        }
+        Set<String> agencies = new HashSet<>();
+        try(Stream<String> lines = Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"))){
             lines.skip(1).forEach(agencies::add);
-
+        }
             System.out.println(LocalDateTime.now());
             logger.info("Fin de lectura de archivos de entrada");
 
@@ -95,15 +93,10 @@ public class Query2Client extends AbstractClient{
             } catch (InvalidPathException | NoSuchFileException e) {
                 System.out.println("Invalid path, query2.csv won't be created");
             }
-
-
-        } catch (ExecutionException | InterruptedException | IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            imap1.destroy();
-            System.out.println("fin");
+        imap1.destroy();
+        System.out.println("fin");
         }
-    }
+
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         new Query2Client().clientMain();
