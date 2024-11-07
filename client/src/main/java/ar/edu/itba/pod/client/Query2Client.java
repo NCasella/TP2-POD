@@ -32,10 +32,10 @@ public class Query2Client extends AbstractClient{
     protected void runClientCode() throws IOException,ExecutionException,InterruptedException {
         Logger logger=LoggerFactory.getLogger(Query2Client.class);
 
-        IMap<Integer,String> imap1 = hazelcastInstance.getMap("YDTPerAgency" + idMap);
+        IMap<Integer,String> imap1 = hazelcastInstance.getMap("g7-YDTPerAgency" + idMap);
         distributedCollections = Collections.singletonList(imap1);
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("query2"+ idMap);
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("g7-query2"+ idMap);
 
         logger.info("Inicio de lectura de archivos de entrada");
 

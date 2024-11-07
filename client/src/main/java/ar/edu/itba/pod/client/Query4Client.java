@@ -51,9 +51,9 @@ public class Query4Client extends AbstractClient {
     protected void runClientCode() throws IOException, ExecutionException, InterruptedException {
         final Logger logger = LoggerFactory.getLogger(Query4Client.class);
 
-        ISet<String> agenciesISet = hazelcastInstance.getSet("agencyNames"+idMap);
-        IMap<String, Infraction> infractionIMap = hazelcastInstance.getMap("infractionsById"+idMap);
-        IMap<Integer, Ticket> ticketsIMap = hazelcastInstance.getMap("ticketsByAgency"+idMap);
+        ISet<String> agenciesISet = hazelcastInstance.getSet("g7-agencyNames"+idMap);
+        IMap<String, Infraction> infractionIMap = hazelcastInstance.getMap("g7-infractionsById"+idMap);
+        IMap<Integer, Ticket> ticketsIMap = hazelcastInstance.getMap("g7-ticketsByAgency"+idMap);
 
         distributedCollections = Arrays.asList(infractionIMap, ticketsIMap,agenciesISet);
 
@@ -84,7 +84,7 @@ public class Query4Client extends AbstractClient {
         }
         logger.info("Fin de lectura de archivos de entrada");
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("getMaxDiffPerInfraction"+idMap);
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("g7-getMaxDiffPerInfraction"+idMap);
         KeyValueSource<Integer, Ticket> source = KeyValueSource.fromMap(ticketsIMap);
         Job<Integer, Ticket> job = jobTracker.newJob(source);
 

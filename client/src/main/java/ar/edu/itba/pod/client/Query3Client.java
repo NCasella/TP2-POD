@@ -68,14 +68,14 @@ public class Query3Client extends AbstractClient{
     protected void runClientCode() throws IOException, ExecutionException, InterruptedException{
         Logger logger = LoggerFactory.getLogger(Query3Client.class);
 
-        IMap<Integer, String> imap1 = hazelcastInstance.getMap("ReincidentPlates" + idMap);
-        IMap<PlateInfractionInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap);
-        IMap<PlateInNeighbourhood,Boolean> imap3 = hazelcastInstance.getMap("ReincidentPlates3" + idMap);
+        IMap<Integer, String> imap1 = hazelcastInstance.getMap("g7-ReincidentPlates" + idMap);
+        IMap<PlateInfractionInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("g7-ReincidentPlates2" + idMap);
+        IMap<PlateInNeighbourhood,Boolean> imap3 = hazelcastInstance.getMap("g7-ReincidentPlates3" + idMap);
 
         distributedCollections = Arrays.asList(imap1, imap2, imap3);
 
         KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(imap1);
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count"+ idMap);
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("g7-reincidentPlates-count"+ idMap);
 
         final AtomicInteger auxKey = new AtomicInteger();
         try (Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel()) {
