@@ -10,11 +10,19 @@ import com.hazelcast.mapreduce.Mapper;
 public class TotalFinesPerInfractionAndAgencyMapper implements Mapper<Long, InfractionDefWithAgency, InfractionAgencyKey,Long>,HazelcastInstanceAware {
 
     private transient HazelcastInstance hazelcastInstance;
+    private final String agenciesIMap;
+    private final String violationsIMap;
+
+    public TotalFinesPerInfractionAndAgencyMapper(String agenciesIMap, String violationsIMap) {
+        this.agenciesIMap = agenciesIMap;
+        this.violationsIMap = violationsIMap;
+    }
+
     @Override
     public void map(Long s, InfractionDefWithAgency ticket, Context<InfractionAgencyKey, Long> context) {
-        if(!hazelcastInstance.<String>getSet("g7-agencies").contains(ticket.getAgencyName()))
+        if(!hazelcastInstance.<String>getSet(agenciesIMap).contains(ticket.getAgencyName()))
             return;
-        context.emit(new InfractionAgencyKey(hazelcastInstance.<String, String>getMap("g7-violations").get(ticket.getInfractionId()), ticket.getAgencyName()), 1L);
+        context.emit(new InfractionAgencyKey(hazelcastInstance.<String, String>getMap(violationsIMap).get(ticket.getInfractionId()), ticket.getAgencyName()), 1L);
     }
 
     @Override

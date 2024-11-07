@@ -1,15 +1,14 @@
 package ar.edu.itba.pod.client;
 
 import ar.edu.itba.pod.collators.FineAmountsPerInfractionCollator;
-import ar.edu.itba.pod.collators.TotalFinesPerInfractionAndAgencyCollator;
 
+import ar.edu.itba.pod.exceptions.InvalidFilePathException;
+import ar.edu.itba.pod.exceptions.InvalidParamException;
 import ar.edu.itba.pod.mappers.FineAmountsPerInfractionMapper;
 import ar.edu.itba.pod.models.Infraction;
-import ar.edu.itba.pod.models.InfractionAgencyKey;
 import ar.edu.itba.pod.models.InfractionFinesDifferences;
 import ar.edu.itba.pod.models.Ticket;
 import ar.edu.itba.pod.reducers.FineAmountsPerInfractionReducerFactory;
-import ar.edu.itba.pod.reducers.TotalFinesPerInfractionAndAgencyReducer;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.ISet;
 import com.hazelcast.mapreduce.Job;
@@ -20,10 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -31,38 +29,41 @@ import java.util.stream.Stream;
 
 public class Query4Client extends AbstractClient {
     private Integer nParam;
-    private Logger logger;
+    private String agencyName;
+    private static final int MIN_N = 1;
 
     public Query4Client() {
         this.queryNumber = 4;
     }
 
     @Override
-    protected void runClientCode() throws IOException, ExecutionException, InterruptedException {
-        logger = LoggerFactory.getLogger(Query4Client.class);
-        if (System.getProperty("n") == null || Integer.parseInt(System.getProperty("n")) < 1) {
-            System.out.println("n parameter is invalid");
-            return;
-        }
+    protected void getParams() {
+        super.getParams();
+        nParam = getNParam(MIN_N);
         if (System.getProperty("agency") == null) {
             System.out.println("agency not specified");
             return;
         }
-        nParam = Integer.parseInt(System.getProperty("n"));
-        String agencyName = System.getProperty("agency").replace("_", " ");
+        agencyName = System.getProperty("agency").replace("_", " ");
+    }
 
-        ISet<String> agenciesISet = hazelcastInstance.getSet("agencyNames");
-        IMap<String, Infraction> infractionIMap = hazelcastInstance.getMap("infractionsById");
-        IMap<Integer, Ticket> ticketsIMap = hazelcastInstance.getMap("ticketsByAgency");
+    @Override
+    protected void runClientCode() throws IOException, ExecutionException, InterruptedException {
+        final Logger logger = LoggerFactory.getLogger(Query4Client.class);
+
+        ISet<String> agenciesISet = hazelcastInstance.getSet("agencyNames"+idMap);
+        IMap<String, Infraction> infractionIMap = hazelcastInstance.getMap("infractionsById"+idMap);
+        IMap<Integer, Ticket> ticketsIMap = hazelcastInstance.getMap("ticketsByAgency"+idMap);
+
+        distributedCollections = Arrays.asList(infractionIMap, ticketsIMap,agenciesISet);
+
         logger.info("Inicio de lectura de archivos de entrada");
 
         try (Stream<String> lines = Files.lines(Paths.get(inPath + "/agencies" + cityParam + ".csv"))) {
             lines.skip(1).forEach(agenciesISet::add);
         }
-        if (!agenciesISet.contains(agencyName)) {
-                System.out.println("Invalid agency");
-                return;
-        }
+        if (!agenciesISet.contains(agencyName))
+            throw new InvalidParamException("Invalid agency");
 
         try (Stream<String> lines = Files.lines(Paths.get(inPath + "/infractions" + cityParam + ".csv"))) {
             lines.skip(1).forEach(line -> {
@@ -76,7 +77,6 @@ public class Query4Client extends AbstractClient {
                 String[] fields = line.split(";");
                 Ticket ticket = cityParam.getTicket(fields);
                 if (infractionIMap.containsKey(ticket.getInfractionId())) {
-                    // logger.info(infractionIMap.getEntryView(ticket.getInfractionId()).getValue().getDescription()+ '-' + ticket.getAgencyName());
                     ticket.setInfractionId(infractionIMap.get(ticket.getInfractionId()).getDescription());
                     ticketsIMap.put(auxKey.getAndIncrement(), ticket);
                 }
@@ -84,10 +84,9 @@ public class Query4Client extends AbstractClient {
         }
         logger.info("Fin de lectura de archivos de entrada");
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("getMaxDiffPerInfraction");
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("getMaxDiffPerInfraction"+idMap);
         KeyValueSource<Integer, Ticket> source = KeyValueSource.fromMap(ticketsIMap);
         Job<Integer, Ticket> job = jobTracker.newJob(source);
-
 
         logger.info("Inicio del trabajo map/reduce");
         List<Map.Entry<String, InfractionFinesDifferences>> result = job
@@ -103,14 +102,11 @@ public class Query4Client extends AbstractClient {
             for (Map.Entry<String, InfractionFinesDifferences> entry : result) {
                 Files.write(path, entry.getValue().toString().getBytes(), StandardOpenOption.APPEND);
             }
-        } catch (InvalidPathException | NoSuchFileException e) {
-            System.out.println("Invalid path, query4.csv won't be created");
-        }
-        logger.info("Fin escritura\n");
-        agenciesISet.destroy();
-        infractionIMap.destroy();
-        ticketsIMap.destroy();
+            logger.info("Fin escritura\n");
 
+        } catch (InvalidPathException | NoSuchFileException e) {
+            throw new InvalidFilePathException(e.getMessage());
+        }
     }
 
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {

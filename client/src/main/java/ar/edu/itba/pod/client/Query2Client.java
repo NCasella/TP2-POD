@@ -2,6 +2,7 @@ package ar.edu.itba.pod.client;
 
 import ar.edu.itba.pod.collators.YDTPerAgencyCollator;
 import ar.edu.itba.pod.combiners.YDTPerAgencyMapperCombinerFactory;
+import ar.edu.itba.pod.exceptions.InvalidFilePathException;
 import ar.edu.itba.pod.mappers.YDTPerAgencyMapper;
 import ar.edu.itba.pod.models.MoneyRaisedPerMonth;
 import ar.edu.itba.pod.models.YearAgencyKey;
@@ -17,32 +18,24 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class Query2Client extends AbstractClient{
-    private final String idMap = LocalDateTime.now().toString();
     private final static int MONTHS = 12;
-    private Logger logger;
 
     public Query2Client(){this.queryNumber=2;}
 
     @Override
     protected void runClientCode() throws IOException,ExecutionException,InterruptedException {
-        logger=LoggerFactory.getLogger(Query2Client.class);
-        // Key Value Source
+        Logger logger=LoggerFactory.getLogger(Query2Client.class);
+
         IMap<Integer,String> imap1 = hazelcastInstance.getMap("YDTPerAgency" + idMap);
+        distributedCollections = Collections.singletonList(imap1);
 
-        // Job Tracker
         JobTracker jobTracker = hazelcastInstance.getJobTracker("query2"+ idMap);
-
-
 
         logger.info("Inicio de lectura de archivos de entrada");
 
@@ -55,44 +48,43 @@ public class Query2Client extends AbstractClient{
             lines.skip(1).forEach(agencies::add);
         }
 
-            logger.info("Fin de lectura de archivos de entrada");
+        logger.info("Fin de lectura de archivos de entrada");
 
-            KeyValueSource<Integer,String> YDTPerAgencyKeyValueSource = KeyValueSource.fromMap(imap1);
-            Job<Integer,String> jobYDTPerAgency = jobTracker.newJob(YDTPerAgencyKeyValueSource);
+        KeyValueSource<Integer,String> YDTPerAgencyKeyValueSource = KeyValueSource.fromMap(imap1);
+        Job<Integer,String> jobYDTPerAgency = jobTracker.newJob(YDTPerAgencyKeyValueSource);
 
-            logger.info("Inicio del trabajo map/reduce");
-             ICompletableFuture<List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>>> future = jobYDTPerAgency
-                                .mapper(new YDTPerAgencyMapper(cityParam,agencies))
-                                .combiner(new YDTPerAgencyMapperCombinerFactory())
-                                .reducer(new YDTPerAgencyReducerFactory())
-                                .submit(new YDTPerAgencyCollator());
+        logger.info("Inicio del trabajo map/reduce");
+         ICompletableFuture<List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>>> future = jobYDTPerAgency
+                            .mapper(new YDTPerAgencyMapper(cityParam,agencies))
+                            .combiner(new YDTPerAgencyMapperCombinerFactory())
+                            .reducer(new YDTPerAgencyReducerFactory())
+                            .submit(new YDTPerAgencyCollator());
 
-            List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>> result = future.get();
+        List<Map.Entry<YearAgencyKey,MoneyRaisedPerMonth>> result = future.get();
 
-            logger.info("Fin map/reduce");
-            logger.info("Comienza escritura");
+        logger.info("Fin map/reduce");
+        logger.info("Comienza escritura");
 
-            try {
-                Path path= Paths.get(outPath+"/query2.csv");
-                Files.write(path,"Agency;Year;Month;YTD\n".getBytes());
+        try {
+            Path path= Paths.get(outPath+"/query2.csv");
+            Files.write(path,"Agency;Year;Month;YTD\n".getBytes());
 
-                for( Map.Entry<YearAgencyKey,MoneyRaisedPerMonth> e : result){
-                    StringBuilder s=new StringBuilder();
-                    String agencyYear = e.getKey().getAgency() + ";" + e.getKey().getYear() + ";";
-                    long[] moneyRaisedPerMonth = e.getValue().getMoneyRaisedPerMonth();
-                    for ( int i=0; i<MONTHS ; i++ ) {
-                        if ( e.getValue().hasMonthRaisedMoneyYDT(i) )
-                            s.append(agencyYear).append(i+1).append(";").append(moneyRaisedPerMonth[i]).append("\n");
-                    }
-                    Files.write(path,s.toString().getBytes(), StandardOpenOption.APPEND);
+            for( Map.Entry<YearAgencyKey,MoneyRaisedPerMonth> e : result){
+                StringBuilder s=new StringBuilder();
+                String agencyYear = e.getKey().getAgency() + ";" + e.getKey().getYear() + ";";
+                long[] moneyRaisedPerMonth = e.getValue().getMoneyRaisedPerMonth();
+                for ( int i=0; i<MONTHS ; i++ ) {
+                    if ( e.getValue().hasMonthRaisedMoneyYDT(i) )
+                        s.append(agencyYear).append(i+1).append(";").append(moneyRaisedPerMonth[i]).append("\n");
                 }
-                logger.info("Fin escritura\n");
-            } catch (InvalidPathException | NoSuchFileException e) {
-                System.out.println("Invalid path, query2.csv won't be created");
+                Files.write(path,s.toString().getBytes(), StandardOpenOption.APPEND);
             }
-        imap1.destroy();
-        }
+            logger.info("Fin escritura\n");
 
+        } catch (InvalidPathException | NoSuchFileException e) {
+            throw new InvalidFilePathException(e.getMessage());
+        }
+    }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         new Query2Client().clientMain();

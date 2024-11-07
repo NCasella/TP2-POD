@@ -2,6 +2,7 @@ package ar.edu.itba.pod.client;
 
 import ar.edu.itba.pod.collators.TotalFinesPerInfractionAndAgencyCollator;
 import ar.edu.itba.pod.combiners.TotalFinesPerInfractionAndAgencyCombinerFactory;
+ import ar.edu.itba.pod.exceptions.InvalidFilePathException;
 import ar.edu.itba.pod.models.Infraction;
 import ar.edu.itba.pod.models.InfractionAgencyKey;
 import ar.edu.itba.pod.mappers.TotalFinesPerInfractionAndAgencyMapper;
@@ -16,10 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
@@ -32,14 +31,18 @@ public class Query1Client extends AbstractClient{
 
     @Override
     protected void runClientCode() throws IOException,ExecutionException,InterruptedException{
-
         Logger logger = LoggerFactory.getLogger(Query1Client.class);
-        IMap<Long, InfractionDefWithAgency> ticketsMap= hazelcastInstance.getMap("g7-tickets");
-        IMap<String, String> violationsMap= hazelcastInstance.getMap("g7-violations");
-        ISet<String> agenciesSet= hazelcastInstance.getSet("g7-agencies");
-        AtomicLong atomicLong=new AtomicLong();
+
+        final String agenciesIMap = "g7-agencies"+idMap;
+        final String violationsIMap = "g7-violations"+idMap;
+
+        IMap<Long, InfractionDefWithAgency> ticketsMap= hazelcastInstance.getMap("g7-tickets"+idMap);
+        IMap<String, String> violationsMap= hazelcastInstance.getMap(violationsIMap);
+        ISet<String> agenciesSet= hazelcastInstance.getSet(agenciesIMap);
+        distributedCollections = Arrays.asList(ticketsMap,violationsMap,agenciesSet);
 
         logger.info("Inicio de lectura de archivos de entrada");
+        AtomicLong atomicLong=new AtomicLong();
         try(Stream<String> lines= Files.lines(Paths.get(inPath+"/agencies"+cityParam+".csv"))){
             lines.skip(1).forEach(agenciesSet::add);
         }
@@ -57,29 +60,32 @@ public class Query1Client extends AbstractClient{
         }
         logger.info("Fin de lectura de archivos de entrada");
 
-        JobTracker jobTracker=hazelcastInstance.getJobTracker("g7-totalFinesPerInfractionAndAgency");
+        JobTracker jobTracker=hazelcastInstance.getJobTracker("g7-totalFinesPerInfractionAndAgency"+idMap);
         KeyValueSource<Long, InfractionDefWithAgency> source=KeyValueSource.fromMap(ticketsMap);
         Job<Long, InfractionDefWithAgency> job= jobTracker.newJob(source);
 
         logger.info("Inicio del trabajo map/reduce");
         SortedSet<Map.Entry<InfractionAgencyKey,Long>> result=job
-                .mapper(new TotalFinesPerInfractionAndAgencyMapper())
+                .mapper(new TotalFinesPerInfractionAndAgencyMapper(agenciesIMap,violationsIMap))
                 .combiner(new TotalFinesPerInfractionAndAgencyCombinerFactory())
                 .reducer(new TotalFinesPerInfractionAndAgencyReducer())
                 .submit(new TotalFinesPerInfractionAndAgencyCollator()).get();
 
         logger.info("Inicio del trabajo map/reduce");
         logger.info("Comienza escritura");
+        try {
+            Path path=Paths.get(outPath+"/query1.csv");
+            Files.write(path,"Infraction;Agency;Tickets\n".getBytes());
+            for(Map.Entry<InfractionAgencyKey,Long> entry:result){
+                StringBuilder stringToWrite=new StringBuilder(entry.getKey().getInfraction())
+                        .append(";").append(entry.getKey().getAgency()).append(";").append(entry.getValue()).append("\n");
+                Files.write(path,stringToWrite.toString().getBytes(),StandardOpenOption.APPEND);
+            }
+            logger.info("Fin escritura\n");
 
-        Path path=Paths.get(outPath+"/query1.csv");
-        Files.write(path,"Infraction;Agency;Tickets\n".getBytes());
-
-        for(Map.Entry<InfractionAgencyKey,Long> entry:result){
-            StringBuilder stringToWrite=new StringBuilder(entry.getKey().getInfraction())
-                            .append(";").append(entry.getKey().getAgency()).append(";").append(entry.getValue()).append("\n");
-            Files.write(path,stringToWrite.toString().getBytes(),StandardOpenOption.APPEND);
+        } catch (InvalidPathException | NoSuchFileException e) {
+            throw new InvalidFilePathException(e.getMessage());
         }
-        logger.info("Fin escritura\n");
 
     }
 

@@ -4,6 +4,7 @@ import ar.edu.itba.pod.collators.ReincidentPlatesPerNeighbourhoodCollator;
 import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodByInfractionTypeCombinerFactory;
 import ar.edu.itba.pod.combiners.ReincidentPlatesInNeighbourhoodCombinerFactory;
 import ar.edu.itba.pod.combiners.ReincidentPlatesPerNeighbourhoodCombinerFactory;
+import ar.edu.itba.pod.exceptions.InvalidFilePathException;
 import ar.edu.itba.pod.exceptions.InvalidParamException;
 import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodByInfractionTypeMapper;
 import ar.edu.itba.pod.mappers.ReincidentPlatesInNeighbourhoodMapper;
@@ -24,11 +25,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -39,22 +40,16 @@ public class Query3Client extends AbstractClient{
     private LocalDate fromDateParam;
     private LocalDate toDateParam;
     private static final String DATE_PATTERN = "dd/MM/yyyy";
+    private static final int MIN_N = 2;
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
-    private static final DecimalFormat df = new DecimalFormat("#.##");
     private Integer nParam;
-    private final String idMap = LocalDateTime.now().toString();
-    private Logger logger;
 
     public Query3Client(){this.queryNumber=3;}
 
-    private void getParams() {
-        try {
-            nParam=Integer.parseInt(System.getProperty("n"));
-        } catch (NumberFormatException e) {
-            throw new InvalidParamException("'n' param as integer is required");
-        }
-        if ( nParam<2 )
-            throw new InvalidParamException("'n' param can't be less than 2");
+    @Override
+    protected void getParams() {
+        super.getParams();
+        nParam = getNParam(MIN_N);
         try {
             fromDateParam= LocalDate.parse(System.getProperty("from"),dateTimeFormatter);
         } catch (DateTimeParseException e) {
@@ -71,20 +66,16 @@ public class Query3Client extends AbstractClient{
 
     @Override
     protected void runClientCode() throws IOException, ExecutionException, InterruptedException{
+        Logger logger = LoggerFactory.getLogger(Query3Client.class);
 
-        logger=LoggerFactory.getLogger(Query3Client.class);
-        getParams();
-
-        // Key Value Source
         IMap<Integer, String> imap1 = hazelcastInstance.getMap("ReincidentPlates" + idMap);
-        KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(imap1);
         IMap<PlateInfractionInNeighbourhood,Integer> imap2 = hazelcastInstance.getMap("ReincidentPlates2" + idMap);
         IMap<PlateInNeighbourhood,Boolean> imap3 = hazelcastInstance.getMap("ReincidentPlates3" + idMap);
 
-        // Job Tracker
+        distributedCollections = Arrays.asList(imap1, imap2, imap3);
+
+        KeyValueSource<Integer, String> reincidentPlatesKeyValueSource = KeyValueSource.fromMap(imap1);
         JobTracker jobTracker = hazelcastInstance.getJobTracker("reincidentPlates-count"+ idMap);
-
-
 
         final AtomicInteger auxKey = new AtomicInteger();
         try (Stream<String> lines = Files.lines(Paths.get(inPath+"/tickets"+cityParam+".csv"), StandardCharsets.UTF_8).parallel()) {
@@ -95,9 +86,7 @@ public class Query3Client extends AbstractClient{
 
             // ---------------------------------------------------- JOB 1 ---------------------------------------------------- //
 
-
             logger.info("Inicio del trabajo map/reduce 1");
-            // MapReduce Job
             Job<Integer, String> jobPlatesInNeighbourhoodByInfractionType = jobTracker.newJob(reincidentPlatesKeyValueSource);
 
             ICompletableFuture<Map<PlateInfractionInNeighbourhood,Integer>> future = jobPlatesInNeighbourhoodByInfractionType
@@ -107,13 +96,8 @@ public class Query3Client extends AbstractClient{
                     .submit();
 
             Map<PlateInfractionInNeighbourhood, Integer> result = future.get();
-
-
-            //result.forEach(
-            //        (k, v) -> System.out.println(k + ": " + v)
-            //);
-
             logger.info("Fin map/reduce 1");
+
             // ---------------------------------------------------- JOB 2 ---------------------------------------------------- //
 
             imap2.putAll(result);
@@ -129,14 +113,10 @@ public class Query3Client extends AbstractClient{
                     .submit();
 
             Map<PlateInNeighbourhood, Boolean> result2 = future2.get();
-
-
-            //result.forEach(
-            //        (k, v) -> System.out.println(k + ": " + v)
-            //);
-
             logger.info("Fin map/reduce 2");
+
             // ---------------------------------------------------- JOB 3 ---------------------------------------------------- //
+
             imap3.putAll(result2);
             logger.info("Inicio del trabajo map/reduce 3");
 
@@ -149,14 +129,9 @@ public class Query3Client extends AbstractClient{
                     .reducer(new ReincidentPlatesPerNeighbourhoodReducerFactory())
                     .submit(new ReincidentPlatesPerNeighbourhoodCollator());
 
-            // Wait and retrieve the result
             List<Map.Entry<String,Double>> result3 = future3.get();
 
-
-            // result3.forEach( e -> System.out.println(e.getKey() + ": " + e.getValue()));
-
             logger.info("Fin map/reduce 3");
-
             logger.info("Comienza escritura");
 
             try {
@@ -165,17 +140,13 @@ public class Query3Client extends AbstractClient{
 
                 for( Map.Entry<String,Double> e : result3){
                     StringBuilder stringToWrite=new StringBuilder(e.getKey())
-                            .append(";").append(e.getValue().toString().formatted("%.2f%%")).append('%').append("\n");
+                            .append(";").append(e.getValue().toString().formatted("%.2f%%")).append("%\n");
                     Files.write(path,stringToWrite.toString().getBytes(), StandardOpenOption.APPEND);
                 }
                 logger.info("Fin escritura\n");
             } catch (InvalidPathException | NoSuchFileException e) {
-                System.out.println("Invalid path, query3.csv won't be created");
+                throw new InvalidFilePathException(e.getMessage());
             }
-        imap1.destroy();
-        imap2.destroy();
-        imap3.destroy();
-
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
